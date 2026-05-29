@@ -33,9 +33,9 @@
     - if logged_in?
       .flow-bar
         .container
-          - steps = employee? ? [[settings_path, "1 · API Key"], [root_path, "2 · Test"], [reports_path, "3 · Reports"], [invite_index_path, "4 · Share"]] : [[settings_path, "1 · API Key"], [root_path, "2 · Test"], [reports_path, "3 · Reports"]]
+          - steps = employee? ? [[settings_path, "1 · API Key"], [reports_path, "2 · Select a Report & Query"], [invite_index_path, "3 · Share"]] : [[settings_path, "1 · API Key"], [reports_path, "2 · Select a Report & Query"]]
           - steps.each_with_index do |(path, label), i|
-            - active = path == root_path ? request.path == '/' : request.path.start_with?(path)
+            - active = request.path.start_with?(path) || (path == reports_path && request.path == '/')
             = link_to label, path, class: "flow-step #{active ? 'flow-step-active' : ''}"
             - if i < steps.length - 1
               %span.flow-step-arrow →
