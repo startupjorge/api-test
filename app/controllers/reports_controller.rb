@@ -64,6 +64,7 @@ class ReportsController < ApplicationController
           @latest_stats = compute_run_stats(client, params[:id], latest_ordinal)
           @latest_ordinal = latest_ordinal
         end
+        build_trends_data
       else
         @error = "Failed to fetch report: HTTP #{response.code} - #{response.message}"
         redirect_to reports_path, alert: @error

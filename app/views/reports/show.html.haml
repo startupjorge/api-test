@@ -1,3 +1,6 @@
+- content_for :head do
+  %script{src: "https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"}
+
 - if @error
   .alert.alert-danger
     %strong Error:
@@ -31,29 +34,59 @@
     .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
       %div
         %h3 📈 % Results Ranked #1
-        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} How often each brand appears as the #1 AI answer
+        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} How often each brand appears as the #1 AI answer across all runs
       .card-header-actions
-        = link_to "View Chart →", trends_report_path(report_id), class: "btn btn-primary btn-sm"
         = link_to "📤 Share", customer_trends_report_path(report_id), class: "btn btn-share btn-sm"
     .card-body
-      - if @latest_stats && @latest_stats[:total] > 0
-        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{@latest_stats[:total]} total answers
-        - sorted = @latest_stats[:brand_names].sort_by { |bkey, _| -(@latest_stats[:brand_counts][bkey] || 0) }
-        %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
-          %thead
-            %tr
-              %th{style: "text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Brand
-              %th{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} % Ranked #1
-          %tbody
-            - sorted.each do |bkey, bname|
-              - ranked1 = @latest_stats[:brand_counts][bkey] || 0
-              - total = @latest_stats[:total]
-              - pct = total > 0 ? (ranked1.to_f / total * 100).round(1) : 0
-              %tr
-                %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= bname
-                %td{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #16a34a;"}= "#{pct}%"
+      - if @chart_datasets.present?
+        %canvas#trendsChart{style: "width: 100%; height: 400px;"}
+        :javascript
+          (function() {
+            const rawLabels = #{@chart_labels.to_json};
+            const labels = rawLabels.map(l => {
+              const d = new Date(l);
+              return isNaN(d) ? l : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            });
+            const palette = [
+              '#7c3aed','#2563eb','#dc2626','#d97706','#059669',
+              '#db2777','#0891b2','#65a30d','#9333ea','#ea580c'
+            ];
+            const allDatasets = #{@chart_datasets.to_json};
+            const scored = allDatasets.map(ds => ({ ...ds, peak: Math.max(...ds.data) })).sort((a, b) => b.peak - a.peak);
+            const top10 = scored.slice(0, 10);
+            const rest  = scored.slice(10);
+            const datasets = [
+              ...top10.map((ds, i) => ({
+                label: ds.label, data: ds.data,
+                borderColor: palette[i % palette.length],
+                backgroundColor: palette[i % palette.length] + '22',
+                tension: 0.3, pointRadius: 4, fill: false, hidden: false
+              })),
+              ...rest.map(ds => ({
+                label: ds.label, data: ds.data,
+                borderColor: '#ccc', backgroundColor: '#ccc22',
+                tension: 0.3, pointRadius: 2, fill: false, hidden: true
+              }))
+            ];
+            new Chart(document.getElementById('trendsChart'), {
+              type: 'line',
+              data: { labels, datasets },
+              options: {
+                responsive: true,
+                plugins: {
+                  title: { display: true, text: '% of Results Ranked #1', font: { size: 14 } },
+                  legend: { position: 'bottom', labels: { filter: item => !item.hidden, boxWidth: 12, font: { size: 11 } } },
+                  tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+                },
+                scales: {
+                  y: { min: 0, title: { display: false }, ticks: { callback: v => v + '%' }, grid: { color: '#e2e8f0' } },
+                  x: { grid: { color: '#e2e8f0' } }
+                }
+              }
+            });
+          })();
       - else
-        %p.text-muted No data available yet.
+        %p.text-muted No run data available yet.
 
   / ── Not Mentioned ───────────────────────────────────────────
   .panel{style: "margin-bottom: 1.5rem;"}
