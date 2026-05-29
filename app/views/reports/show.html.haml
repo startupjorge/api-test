@@ -19,7 +19,7 @@
     .test-step-label Choose a query
     .query-cards
       .query-card{id: "card-trends", onclick: "document.getElementById('qt_trends').click()"}
-        = f.radio_button :query_type, "trends", id: "qt_trends", checked: @query_type != "not_mentioned"
+        = f.radio_button :query_type, "trends", id: "qt_trends", checked: @query_type != "not_mentioned" && @active_custom_query.nil?
         %label.query-card-label{for: "qt_trends"}
           .query-card-icon 📈
           .query-card-content
@@ -27,12 +27,26 @@
             %p How often each brand appears as the #1 AI answer across all runs
 
       .query-card{id: "card-not_mentioned", onclick: "document.getElementById('qt_not_mentioned').click()"}
-        = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned"
+        = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned", checked: @query_type == "not_mentioned"
         %label.query-card-label{for: "qt_not_mentioned"}
           .query-card-icon 🔍
           .query-card-content
             %strong Not Mentioned
             %p Conversations where your brand was completely absent from AI answers
+
+      - @custom_queries.each do |cq|
+        - cq_id = "card-#{cq.query_key}"
+        - radio_id = "qt_#{cq.query_key}"
+        .query-card{id: cq_id, onclick: "document.getElementById('#{radio_id}').click()"}
+          = f.radio_button :query_type, cq.query_key, id: radio_id, checked: @query_type == cq.query_key
+          %label.query-card-label{for: radio_id}
+            .query-card-icon= cq.icon
+            .query-card-content
+              %strong= cq.name
+              %p= cq.description
+
+    - if employee?
+      = link_to "＋ Add Query", new_custom_query_path, class: "btn btn-secondary btn-sm", style: "margin-top: 0.75rem; display: inline-flex;"
 
   #brand-key-group{style: "display: none; margin-bottom: 1.5rem;"}
     .test-step-label Brand key
@@ -124,6 +138,49 @@
           %p.text-muted #{@brand_key} appeared in every conversation in this run.
       - else
         %p.text-muted No data found.
+
+- if @active_custom_query && @chart_datasets.present?
+  .result-panel{style: "margin-top: 2rem;"}
+    .result-panel-header
+      %span.result-panel-title= "#{@active_custom_query.icon} #{@active_custom_query.name}"
+      %span.result-panel-sub= @active_custom_query.description
+    .result-panel-body
+      %canvas#customQueryChart{style: "width: 100%; height: 400px;"}
+  :javascript
+    (function() {
+      const rawLabels = #{@chart_labels.to_json};
+      const labels = rawLabels.map(l => {
+        const d = new Date(l);
+        return isNaN(d) ? l : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      });
+      const ds = #{@chart_datasets.to_json}[0];
+      new Chart(document.getElementById('customQueryChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: ds.label,
+            data: ds.data,
+            borderColor: '#2563eb',
+            backgroundColor: '#2563eb22',
+            tension: 0.3,
+            pointRadius: 4,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}` } }
+          },
+          scales: {
+            y: { title: { display: true, text: #{@chart_y_label.to_json} } },
+            x: { title: { display: true, text: 'Run Date' } }
+          }
+        }
+      });
+    })();
 
 - if @query_type.present?
   %details.api-how-to{style: "margin-top: 2rem;", open: true}

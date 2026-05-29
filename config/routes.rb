@@ -24,4 +24,6 @@ Rails.application.routes.draw do
   resources :invite, only: [:index, :create]
 
   resource :settings, only: [:show, :update]
+
+  resources :custom_queries
 end

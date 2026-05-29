@@ -1,0 +1,39 @@
+- content_for :title, "Manage Queries · Gumshoe"
+
+.page-header
+  %h1 Manage Queries
+  %p.text-muted Define custom queries that appear on every report page
+
+= link_to "＋ Add Query", new_custom_query_path, class: "btn btn-primary", style: "margin-bottom: 1.5rem; display: inline-flex;"
+
+- if @custom_queries.any?
+  .panel
+    %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+      %thead
+        %tr
+          %th{style: "text-align: left; padding: 0.75rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase;"} Query
+          %th{style: "text-align: left; padding: 0.75rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase;"} API Field
+          %th{style: "text-align: left; padding: 0.75rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase;"} Status
+          %th{style: "border-bottom: 1px solid #e2e8f0;"}
+      %tbody
+        - @custom_queries.each do |q|
+          %tr
+            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9;"}
+              %span{style: "margin-right: 0.4rem;"}= q.icon
+              %strong= q.name
+              - if q.description.present?
+                %div{style: "font-size: 0.78rem; color: #94a3b8; margin-top: 2px;"}= q.description
+            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; font-family: monospace; font-size: 0.8rem; color: #475569;"}= q.value_path
+            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9;"}
+              - if q.active?
+                %span.status.complete Active
+              - else
+                %span.status.pending Inactive
+            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; text-align: right;"}
+              .btn-group
+                = link_to "Edit", edit_custom_query_path(q), class: "btn btn-secondary btn-sm"
+                = button_to "Delete", custom_query_path(q), method: :delete, class: "btn btn-secondary btn-sm", style: "color: #dc2626;", data: { turbo_confirm: "Remove \"#{q.name}\"?" }
+- else
+  .panel
+    .card-body
+      %p.text-muted No custom queries yet. Add one to get started.

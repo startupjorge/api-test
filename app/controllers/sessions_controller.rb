@@ -38,6 +38,12 @@ class SessionsController < ApplicationController
     session[:api_key]        = data[:api_key]    if data[:api_key].present?
     session[:customer_email] = data[:email]      if data[:email].present?
 
+    # Store expiry in session so access is revoked when link expires
+    customer = Customer.find_by(email: data[:email]) if data[:email].present?
+    if customer&.invite_expires_at.present?
+      session[:session_expires_at] = customer.invite_expires_at.iso8601
+    end
+
     if session[:customer_email].present? || session[:api_key].present?
       redirect_to root_path, notice: "Welcome! You're now viewing the Gumshoe API."
     else

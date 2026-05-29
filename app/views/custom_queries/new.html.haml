@@ -1,0 +1,7 @@
+- content_for :title, "New Query · Gumshoe"
+
+.page-header
+  %h1 Add Query
+  %p.text-muted This query will appear on every report page
+
+= render "form", custom_query: @custom_query

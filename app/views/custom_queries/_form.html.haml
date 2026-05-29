@@ -1,0 +1,48 @@
+= form_with model: custom_query, local: true do |f|
+  - if custom_query.errors.any?
+    .alert.alert-danger
+      = custom_query.errors.full_messages.to_sentence
+
+  .panel
+    .card-body
+      .form-group{style: "margin-bottom: 1.25rem;"}
+        = f.label :name, "Query Name", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.text_field :name, class: "form-input", placeholder: "e.g. Visibility Score"
+
+      .form-group{style: "margin-bottom: 1.25rem;"}
+        = f.label :description, "Description", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.text_area :description, class: "form-input", rows: 2, placeholder: "What does this query show?"
+
+      .two-col{style: "display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;"}
+        .form-group
+          = f.label :icon, "Icon (emoji)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+          = f.text_field :icon, class: "form-input", style: "font-size: 1.2rem; max-width: 80px;"
+        .form-group
+          = f.label :y_axis_label, "Y-Axis Label", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+          = f.text_field :y_axis_label, class: "form-input", placeholder: "e.g. Score (%)"
+
+      .form-group{style: "margin-bottom: 1.25rem;"}
+        = f.label :value_path, "API Field Path", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.text_field :value_path, class: "form-input", style: "font-family: monospace;", placeholder: "e.g. scores.overallScore"
+        %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.5;"}
+          Dot-notation path into the
+          %code GET /v1/reports/{id}/runs/{ordinal}
+          response under
+          %code data
+          \.
+          %br
+          Examples:
+          %code scores.overallScore
+          ·
+          %code scores.navigationScore
+          ·
+          %code scores.metadataScore
+
+      .form-group{style: "margin-bottom: 1.25rem;"}
+        = f.label :active, style: "display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;"
+          = f.check_box :active
+          Show on report pages
+
+      .btn-group
+        = f.submit "Save Query", class: "btn btn-primary"
+        = link_to "Cancel", custom_queries_path, class: "btn btn-secondary"

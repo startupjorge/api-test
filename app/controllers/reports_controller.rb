@@ -54,7 +54,8 @@ class ReportsController < ApplicationController
     @brand_key = brand["key"] || brand[:key]
     @brand_name = brand["name"] || brand[:name]
 
-    @query_type = params[:query_type]
+    @query_type     = params[:query_type]
+    @custom_queries = CustomQuery.active.order(:name)
 
     case @query_type
     when "trends"
@@ -63,6 +64,9 @@ class ReportsController < ApplicationController
       @brand_key = params[:brand_key].presence || @brand_key
       @ordinal   = params[:ordinal].presence || "1"
       build_not_mentioned_data(client)
+    else
+      custom_q = @custom_queries.find { |q| q.query_key == @query_type }
+      build_custom_query_data(client, custom_q) if custom_q
     end
     @api_calls = client.api_calls
   rescue => e
@@ -75,6 +79,36 @@ class ReportsController < ApplicationController
 
 
   private
+
+  def build_custom_query_data(client, custom_q)
+    @active_custom_query = custom_q
+    runs = client.get_runs(@report_id)
+
+    mutex = Mutex.new
+    points = {}
+
+    threads = runs.map do |run|
+      Thread.new do
+        ordinal = run["ordinal"] || run[:ordinal]
+        date    = run["createdAt"] || run[:created_at] || ordinal.to_s
+        response = client.report_run(@report_id, ordinal)
+        if response.success?
+          parsed = response.parsed_response
+          data   = parsed.is_a?(Hash) ? (parsed["data"] || parsed) : parsed
+          value  = custom_q.extract_value(data)
+          mutex.synchronize { points[ordinal] = { date: date, value: value.to_f } } if value
+        end
+      end
+    end
+    threads.each(&:join)
+
+    sorted = points.keys.sort.map { |o| points[o] }
+    @chart_labels   = sorted.map { |p| p[:date] }
+    @chart_datasets = [{ label: custom_q.name, data: sorted.map { |p| p[:value] } }]
+    @chart_y_label  = custom_q.y_axis_label.presence || "Value"
+  rescue => e
+    @error = "Error loading data: #{e.message}"
+  end
 
   def build_not_mentioned_data(client)
     raw = client.get_raw(@report_id, @ordinal)

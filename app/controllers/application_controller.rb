@@ -9,7 +9,18 @@ class ApplicationController < ActionController::Base
   private
 
   def require_login
+    if session_expired?
+      reset_session
+      redirect_to login_path, alert: "Your access link has expired. Ask your Gumshoe contact for a new one." and return
+    end
     redirect_to login_path unless logged_in?
+  end
+
+  def session_expired?
+    return false if session[:session_expires_at].blank?
+    Time.parse(session[:session_expires_at]) < Time.current
+  rescue
+    false
   end
 
   def require_api_key
