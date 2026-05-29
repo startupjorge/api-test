@@ -93,31 +93,33 @@
     .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
       %div
         %h3 🔍 Not Mentioned
-        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} AI conversations where a brand was completely absent
+        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} Conversations where #{brand_name || brand_key || "your brand"} was completely absent from AI answers
       .card-header-actions
         - if brand_key.present?
-          = link_to "View Results →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
+          = link_to "View conversations →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
           = link_to "📤 Share", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
         - else
-          = link_to "View Results →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
+          = link_to "View conversations →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
           = link_to "📤 Share", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-share btn-sm"
     .card-body
-      - if @latest_stats && @latest_stats[:total] > 0
-        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{@latest_stats[:total]} total answers
-        - sorted = @latest_stats[:brand_names].sort_by { |bkey, _| -(@latest_stats[:not_mentioned_counts][bkey] || 0) }
-        %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
-          %thead
-            %tr
-              %th{style: "text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Brand
-              %th{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Not Mentioned
-          %tbody
-            - sorted.each do |bkey, bname|
-              - not_mentioned = @latest_stats[:not_mentioned_counts][bkey] || 0
-              - total = @latest_stats[:total]
-              - pct = total > 0 ? (not_mentioned.to_f / total * 100).round(1) : 0
-              %tr
-                %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= bname
-                %td{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #dc2626;"}= "#{not_mentioned} (#{pct}%)"
+      - if @latest_stats && @latest_stats[:total] > 0 && brand_key.present?
+        - not_mentioned_count = @latest_stats[:not_mentioned_counts][brand_key] || 0
+        - total = @latest_stats[:total]
+        - mentioned_count = total - not_mentioned_count
+        - pct_not_mentioned = total > 0 ? (not_mentioned_count.to_f / total * 100).round(1) : 0
+        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{total} total conversations
+        .stats-row{style: "margin-bottom: 0;"}
+          .stat-card
+            .stat-number{style: "color: #dc2626;"}= not_mentioned_count
+            .stat-label Not Mentioned
+          .stat-card
+            .stat-number{style: "color: #dc2626;"}= "#{pct_not_mentioned}%"
+            .stat-label of Conversations
+          .stat-card
+            .stat-number{style: "color: #059669;"}= mentioned_count
+            .stat-label Was Mentioned
+      - elsif @latest_stats && @latest_stats[:total] > 0
+        %p.text-muted No brand key set for this report — use "View conversations" to filter by brand.
       - else
         %p.text-muted No data available yet.
 
