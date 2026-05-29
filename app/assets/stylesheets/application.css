@@ -1786,3 +1786,18 @@ body.page-mode-customer {}
   font-size: 1rem;
   font-weight: 300;
 }
+
+.api-how-to-toggle {
+  justify-content: space-between;
+}
+
+.api-how-to-docs-link a {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.api-how-to-docs-link a:hover {
+  text-decoration: underline;
+}

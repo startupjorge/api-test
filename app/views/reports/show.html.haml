@@ -125,10 +125,11 @@
       - else
         %p.text-muted No data found.
 
-- if @query_type.present? && (@chart_datasets.present? || @not_mentioned || @error)
-  %details.api-how-to{style: "margin-top: 2rem;"}
+- if @query_type.present?
+  %details.api-how-to{style: "margin-top: 2rem;", open: true}
     %summary.api-how-to-toggle
       %span 🔌 How to call this API
+      %span.api-how-to-docs-link= link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", onclick: "event.stopPropagation();"
     .api-how-to-body
       - if @query_type == "trends"
         %p.api-how-to-intro
@@ -155,10 +156,6 @@
             .step-content
               %strong Compute % Ranked #1
               %p.text-muted For each answer in the raw response, check #{"`"}mentions[].rank == 1#{"`"} and tally by brand key. Divide by total answers to get the percentage.
-        %p.api-how-to-docs
-          Full API reference:
-          = link_to "app.gumshoe.ai/openapi", "https://app.gumshoe.ai/openapi", target: "_blank"
-
       - elsif @query_type == "not_mentioned"
         %p.api-how-to-intro
           Not Mentioned is computed from the raw run results. Any conversation where your brand key does not appear in #{"`"}mentions[].brand.key#{"`"} is counted as not mentioned.
@@ -187,10 +184,6 @@
                       m.dig("brand", "key") == "#{@brand_key}"
                     end
                   end
-        %p.api-how-to-docs
-          Full API reference:
-          = link_to "app.gumshoe.ai/openapi", "https://app.gumshoe.ai/openapi", target: "_blank"
-
 :javascript
   (function() {
     const radios = document.querySelectorAll('input[name="query_type"]');
