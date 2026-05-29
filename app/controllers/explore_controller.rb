@@ -4,20 +4,19 @@ class ExploreController < ApplicationController
     @reports = load_reports_list
 
     if params[:report_id].present? && params[:query_type].present?
-      @report_id  = params[:report_id]
-      @query_type = params[:query_type]
-      @brand_key  = params[:brand_key].to_s.strip.presence
-      @ordinal    = params[:ordinal].presence || "1"
+      report_id  = params[:report_id]
+      query_type = params[:query_type]
+      brand_key  = params[:brand_key].to_s.strip.presence
+      ordinal    = params[:ordinal].presence || "1"
 
-      client = GumshoeClient.new(current_api_key)
+      save_query_to_history(query_type, report_id, brand_key)
 
-      case @query_type
-      when "trends"        then build_trends(client)
-      when "not_mentioned" then build_not_mentioned(client)
+      case query_type
+      when "trends"
+        redirect_to trends_report_path(report_id) and return
+      when "not_mentioned"
+        redirect_to not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal, brand_key: brand_key) and return
       end
-
-      @api_calls = client.api_calls
-      save_query_to_history(@query_type, @report_id, @brand_key) unless @result_error
     end
   rescue => e
     @result_error = e.message

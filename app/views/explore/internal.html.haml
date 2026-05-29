@@ -65,49 +65,6 @@
     .test-step
       = f.submit "Run →", class: "btn btn-primary btn-lg"
 
-- if @result_error
-  .alert.alert-danger{style: "margin-top: 1.5rem;"}= @result_error
-
-- if @api_calls&.any?
-  .api-test-panel
-    .api-test-panel-header
-      %span.api-test-panel-title API Calls
-      %span.api-test-panel-count= "#{@api_calls.size} request#{@api_calls.size == 1 ? '' : 's'}"
-
-    - @api_calls.each_with_index do |call, i|
-      .api-call-block
-        .api-call-request
-          .api-call-request-line
-            %span.http-method= call[:method]
-            %span.api-call-url= call[:url]
-          .api-call-meta-row
-            - status_class = call[:status] < 300 ? "status-ok" : "status-err"
-            %span.status-badge{class: status_class}= "#{call[:status]} #{call[:status] < 300 ? "OK" : "Error"}"
-            %span.api-call-time= "#{call[:time_ms]}ms"
-            %button.btn-copy-curl{type: "button", "data-curl": call[:curl], onclick: "copyCurl(this)"} Copy curl
-
-        .api-call-response
-          .api-call-response-header
-            %span Response body
-            %button.btn-toggle-json{type: "button", onclick: "toggleJson(this)"} Show full JSON ▼
-          %pre.json-preview{id: "json-#{i}"}= call[:body].to_s.lines.first(20).join
-          %pre.json-full{id: "json-full-#{i}", style: "display:none;"}= call[:body]
-
-- if @result_type
-  .result-panel
-    .result-panel-header
-      %span.result-panel-title
-        - if @result_type == :trends
-          📈 % Results Ranked #1
-        - elsif @result_type == :not_mentioned
-          🔍 Not Mentioned
-      %span.result-panel-sub Computed from API response
-
-    .result-panel-body
-      - if @result_type == :trends
-        = render "trends_result"
-      - elsif @result_type == :not_mentioned
-        = render "not_mentioned_result"
 
 - recent = (session[:query_history] || [])
 - if recent.any?
@@ -140,20 +97,3 @@
     updateUI();
   })();
 
-  function copyCurl(btn) {
-    const curl = btn.getAttribute('data-curl');
-    navigator.clipboard.writeText(curl).then(() => {
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => btn.textContent = 'Copy curl', 2000);
-    });
-  }
-
-  function toggleJson(btn) {
-    const block = btn.closest('.api-call-response');
-    const preview = block.querySelector('[id^="json-"]:not([id*="full"])');
-    const full = block.querySelector('[id*="full"]');
-    const collapsed = full.style.display === 'none';
-    preview.style.display = collapsed ? 'none' : '';
-    full.style.display = collapsed ? '' : 'none';
-    btn.textContent = collapsed ? 'Show less ▲' : 'Show full JSON ▼';
-  }
