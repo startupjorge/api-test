@@ -12,6 +12,11 @@ class ApplicationController < ActionController::Base
     redirect_to login_path unless logged_in?
   end
 
+  def require_api_key
+    return if current_api_key.present?
+    redirect_to settings_path, alert: "Set your Gumshoe API key to continue."
+  end
+
   def require_employee
     redirect_to root_path unless employee?
   end
