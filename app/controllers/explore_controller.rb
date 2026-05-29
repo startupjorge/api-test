@@ -127,7 +127,7 @@ class ExploreController < ApplicationController
         q_model = question["model"] || ""
         (question["answers"] || []).each do |answer|
           all_answers << {
-            persona_name:,
+            persona_name: persona_name,
             question_text: q_text,
             model:         q_model,
             answer_text:   answer["text"] || "",
