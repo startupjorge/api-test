@@ -64,7 +64,7 @@ class ExploreController < ApplicationController
       q.match(/brand[:\s]+([a-z0-9_-]+)/i)&.[](1)
 
     action =
-      if q =~ /trend|rank over|over time|chart|ranking over|how.*rank|ranked.*over/
+      if q =~ /trend|rank over|over time|chart|ranking over|how.*rank|ranked.*over|%.*rank|rank.*#1|ranked.*#1|results ranked|ranked #1|percent.*rank|rank.*percent/
         :trends
       elsif q =~ /not mention|missing|absent|gap|never|without.*mention/
         :not_mentioned
@@ -81,8 +81,7 @@ class ExploreController < ApplicationController
 
   def build_trends(client)
     unless @intent[:report_id]
-      @result_error = "Please include a report ID — e.g. \"rank trends for report 22110\""
-      return
+      redirect_to api_query_rank_trends_path and return
     end
     @result_type = :trends
     @report_id = @intent[:report_id]
@@ -141,13 +140,8 @@ class ExploreController < ApplicationController
   end
 
   def build_not_mentioned(client)
-    unless @intent[:report_id]
-      @result_error = "Please include a report ID — e.g. \"not mentioned for shipiumcom in report 22110 run 1\""
-      return
-    end
-    unless @intent[:brand_key]
-      @result_error = "Please include a brand key — e.g. \"not mentioned for brand shipiumcom in report 22110\""
-      return
+    unless @intent[:report_id] && @intent[:brand_key]
+      redirect_to api_query_not_mentioned_path and return
     end
 
     @result_type = :not_mentioned
