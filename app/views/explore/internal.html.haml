@@ -17,7 +17,7 @@
     %h1.explore-title What do you want the Gumshoe API to do?
     %p.explore-subtitle Type a question in plain English — the app will figure out which API calls to make and show you the results.
 
-  = form_with url: explore_internal_path, method: :get, local: true do |f|
+  = form_with url: root_path, method: :get, local: true do |f|
     .explore-input-row
       = f.text_field :query, value: @query,
           placeholder: "e.g. Show rank trends for report 22110",
@@ -45,7 +45,7 @@
           - when "show_report"   then "Report #{h["report_id"]}"
           - else h["query"]
         %li
-          = link_to friendly, explore_internal_path(query: h["query"]), class: "recent-query-link"
+          = link_to friendly, root_path(query: h["query"]), class: "recent-query-link"
 
 - if @query.present?
   .explore-results
@@ -93,10 +93,6 @@
           %li "Not mentioned for brand shipiumcom in report 22110 run 1"
           %li "List my reports"
 
-    - if @result_type && !@result_error
-      .explore-share-row
-        %span.share-hint Ready to share these results with your customer?
-        = link_to "📤 Share Externally", explore_customer_path(query: @query), class: "btn btn-share"
 
 :javascript
   function setExploreQuery(text) {
