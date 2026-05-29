@@ -14,9 +14,8 @@
     %h1 Rank Trends
     %p.text-muted % of answers where each brand was ranked #1 across all runs
   .btn-group
-    %span.badge.badge-internal Internal
     - if @report_id
-      = link_to "📤 Share with Customer", customer_trends_report_path(@report_id), class: "btn btn-success btn-sm"
+      = link_to "📤 Share Externally", customer_trends_report_path(@report_id), class: "btn btn-share btn-sm"
 
 .helper-box.helper-customer
   %strong How to read this chart:

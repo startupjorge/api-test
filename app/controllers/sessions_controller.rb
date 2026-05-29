@@ -8,7 +8,12 @@ class SessionsController < ApplicationController
     email = params[:email].to_s.strip.downcase
     if email.end_with?("@gumshoe.ai") && email.length > "@gumshoe.ai".length
       session[:employee_email] = email
-      redirect_to root_path, notice: "Welcome, #{email.split('@').first.capitalize}!"
+      name = email.split("@").first.capitalize
+      if current_api_key.blank?
+        redirect_to settings_path, notice: "Welcome, #{name}! Start by adding your Gumshoe API key."
+      else
+        redirect_to explore_internal_path, notice: "Welcome back, #{name}!"
+      end
     else
       flash.now[:alert] = "Access is limited to @gumshoe.ai email addresses."
       render :new, status: :unprocessable_entity

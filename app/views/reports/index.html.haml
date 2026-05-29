@@ -1,7 +1,14 @@
+.admin-flow-bar
+  .flow-step.flow-step-done= link_to "1 · API Key", settings_path
+  .flow-step-arrow →
+  .flow-step.flow-step-done= link_to "2 · Ask", explore_internal_path
+  .flow-step-arrow →
+  .flow-step.flow-step-active 3 · Reports
+
 .page-header{style: "display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;"}
   %div
     %h1 Reports
-    %p.text-muted Your Gumshoe reports — click any report to explore its data
+    %p.text-muted Click a report to see API results and share them with your customer
 
 - if @error
   .alert.alert-danger
@@ -38,10 +45,7 @@
             - else
               —
           %td{style: "text-align: right;"}
-            .btn-group{style: "justify-content: flex-end;"}
-              - if report_id
-                = link_to "Open →", report_path(report_id), class: "btn btn-primary btn-sm"
-                = link_to "📈 Trends", customer_trends_report_path(report_id), class: "btn btn-outline btn-sm"
+            = link_to "View Results →", report_path(report_id), class: "btn btn-primary btn-sm"
 
   - if @prev_token || @next_token
     .pagination
@@ -52,23 +56,4 @@
 - else
   .card
     .card-body
-      %p.text-muted No reports found.
-
-.panel.panel-internal{style: "margin-top: 1.5rem;"}
-  .panel-header{onclick: "togglePanel(this)"}
-    %span.badge.badge-internal Internal
-    %h3 API Debug
-    %span.panel-toggle ▼
-  .panel-body.hidden
-    - if @curl_command
-      .debug-block
-        .debug-label curl command
-        %code= @curl_command
-
-:javascript
-  function togglePanel(header) {
-    const body = header.nextElementSibling;
-    const toggle = header.querySelector('.panel-toggle');
-    body.classList.toggle('hidden');
-    toggle.classList.toggle('open');
-  }
+      %p.text-muted No reports found. Make sure your API key is set in Settings.

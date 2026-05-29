@@ -58,6 +58,12 @@ class ReportsController < ApplicationController
           parsed
         end
         @runs = @report.is_a?(Hash) ? (@report["runs"] || @report[:runs] || []) : []
+        latest_run = @runs.max_by { |r| (r["ordinal"] || r[:ordinal] || 0).to_i }
+        if latest_run
+          latest_ordinal = latest_run["ordinal"] || latest_run[:ordinal]
+          @latest_stats = compute_run_stats(client, params[:id], latest_ordinal)
+          @latest_ordinal = latest_ordinal
+        end
       else
         @error = "Failed to fetch report: HTTP #{response.code} - #{response.message}"
         redirect_to reports_path, alert: @error
@@ -77,6 +83,37 @@ class ReportsController < ApplicationController
   end
 
   private
+
+  def compute_run_stats(client, report_id, ordinal)
+    raw = client.get_raw(report_id, ordinal)
+    brand_counts = Hash.new(0)
+    not_mentioned_counts = Hash.new(0)
+    brand_names = {}
+    total = 0
+
+    (raw["personas"] || []).each do |persona|
+      (persona["questions"] || []).each do |question|
+        (question["answers"] || []).each do |answer|
+          total += 1
+          mentioned = {}
+          (answer["mentions"] || []).each do |m|
+            b = m["brand"] || m[:brand] || {}
+            bkey = b["key"] || b[:key] || "unknown"
+            bname = b["name"] || b[:name] || bkey
+            brand_names[bkey] = bname
+            mentioned[bkey] = true
+            brand_counts[bkey] += 1 if (m["rank"] || m[:rank]) == 1
+          end
+          brand_names.each_key { |bkey| not_mentioned_counts[bkey] += 1 unless mentioned[bkey] }
+        end
+      end
+    end
+
+    { total: total, brand_counts: brand_counts, not_mentioned_counts: not_mentioned_counts, brand_names: brand_names }
+  rescue => e
+    Rails.logger.warn "compute_run_stats failed: #{e.message}"
+    nil
+  end
 
   def build_trends_data
     begin

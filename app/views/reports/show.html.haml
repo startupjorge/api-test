@@ -9,7 +9,7 @@
   - brand_name = brand ? (brand['name'] || brand[:name]) : nil
   - brand_key = brand ? (brand['key'] || brand[:key]) : nil
   - status = @report['status'] || @report[:status]
-  - latest_ordinal = @runs&.any? ? (@runs.map { |r| r['ordinal'] || r[:ordinal] }.compact.max || 1) : 1
+  - latest_ordinal = @latest_ordinal || (@runs&.any? ? (@runs.map { |r| r['ordinal'] || r[:ordinal] }.compact.max || 1) : 1)
 
   .breadcrumb
     = link_to "Reports", reports_path
@@ -30,39 +30,64 @@
         · ID:
         %code{style: "font-size: 0.8rem;"}= report_id
 
-  / ── Feature cards ──────────────────────────────────────
+  / ── Latest Run Stats ──────────────────────────────────────
+  - if @latest_stats && @latest_stats[:total] > 0
+    .stats-section
+      %h3.stats-section-title
+        Latest Run Stats
+        %span.stats-run-label Run #{latest_ordinal}
+      .stats-brands
+        - sorted = @latest_stats[:brand_names].sort_by { |bkey, _| -(@latest_stats[:brand_counts][bkey] || 0) }
+        - sorted.each do |bkey, bname|
+          - ranked1 = @latest_stats[:brand_counts][bkey] || 0
+          - not_mentioned = @latest_stats[:not_mentioned_counts][bkey] || 0
+          - total = @latest_stats[:total]
+          - pct = total > 0 ? (ranked1.to_f / total * 100).round(1) : 0
+          .brand-stat-row
+            .brand-stat-name= bname
+            .brand-stat-pills
+              .stat-pill.stat-pill-green
+                %span.pill-label % Ranked #1
+                %span.pill-value= "#{pct}%"
+              .stat-pill.stat-pill-red
+                %span.pill-label Not Mentioned
+                %span.pill-value= not_mentioned
+              - if brand_key == bkey
+                = link_to "View →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: bkey), class: "btn btn-outline btn-xs"
+
+  / ── API Calls ──────────────────────────────────────────────
   .feature-grid
     .feature-card
       .feature-card-icon 📈
-      %h3 Rank Trends
-      %p How often each brand appears as the #1 AI answer — plotted across every run so you can see momentum and changes over time.
+      %h3 % Results Ranked #1
+      %p How often each brand appears as the #1 AI answer across every run — track momentum over time.
       .feature-card-actions
         = link_to "View Chart", trends_report_path(report_id), class: "btn btn-primary btn-sm"
-        = link_to "Share →", customer_trends_report_path(report_id), class: "btn btn-outline btn-sm"
+        = link_to "📤 Share Externally", customer_trends_report_path(report_id), class: "btn btn-share btn-sm"
     .feature-card
       .feature-card-icon 🔍
       %h3 Not Mentioned
       %p Every AI conversation where a specific brand was completely absent — your competitive gap finder.
       .feature-card-actions
         - if brand_key.present?
-          = link_to "Browse", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
-          = link_to "Share →", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-outline btn-sm"
+          = link_to "View Results", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
+          = link_to "📤 Share Externally", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
         - else
-          = link_to "Browse", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
-          = link_to "Share →", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-outline btn-sm"
+          = link_to "View Results", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
+          = link_to "📤 Share Externally", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-share btn-sm"
 
   / ── Runs ────────────────────────────────────────────────
   - if @runs && @runs.any?
-    .panel
+    .panel{style: "margin-top: 1.5rem;"}
       .card-header
-        %h3 Runs
+        %h3 All Runs
         %span.text-muted{style: "font-size: 0.8rem;"} #{@runs.count} total
       %table.table{style: "border-radius: 0; box-shadow: none;"}
         %thead
           %tr
             %th Run
             %th Date
-            %th{style: "text-align: right;"} Actions
+            %th{style: "text-align: right;"} Share Externally
         %tbody
           - @runs.each do |run|
             - ordinal = run['ordinal'] || run[:ordinal]
@@ -76,38 +101,10 @@
                 - else
                   —
               %td{style: "text-align: right;"}
-                .btn-group{style: "justify-content: flex-end;"}
-                  = link_to "View", report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-secondary btn-sm"
-                  - if brand_key.present?
-                    = link_to "Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal, brand_key: brand_key), class: "btn btn-outline btn-sm"
-                  - else
-                    = link_to "Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-outline btn-sm"
-  - else
-    .card
-      .card-body
-        %p.text-muted No runs found for this report.
-
-  / ── Internal debug ──────────────────────────────────────
-  .panel.panel-internal{style: "margin-top: 1rem;"}
-    .panel-header{onclick: "togglePanel(this)"}
-      %span.badge.badge-internal Internal
-      %h3 API Debug
-      %span.panel-toggle ▼
-    .panel-body.hidden
-      - if @curl_command
-        .debug-block
-          .debug-label curl command
-          %code= @curl_command
-      .report-details.mt-2
-        %dl
-          - @report.each do |key, value|
-            - next if key.to_s == 'runs'
-            %dt= key.to_s.humanize
-            %dd
-              - if value.is_a?(Hash) || value.is_a?(Array)
-                %pre= JSON.pretty_generate(value)
-              - else
-                = value
+                - if brand_key.present?
+                  = link_to "📤 Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
+                - else
+                  = link_to "📤 Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-share btn-sm"
 
 :javascript
   function togglePanel(header) {

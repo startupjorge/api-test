@@ -1007,3 +1007,168 @@ body.page-mode-customer {}
 .nav-link-signout:hover {
   opacity: 1;
 }
+
+/* Admin flow step bar */
+.admin-flow-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.flow-step {
+  color: #94a3b8;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+}
+
+.flow-step a {
+  color: #64748b;
+  text-decoration: none;
+}
+
+.flow-step a:hover {
+  color: #1a2332;
+}
+
+.flow-step-active {
+  background: #1a2332;
+  color: #fff !important;
+}
+
+.flow-step-done a {
+  color: #059669 !important;
+}
+
+.flow-step-arrow {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+/* Share Externally button */
+.btn-share {
+  background: #0f766e;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.btn-share:hover {
+  background: #0d5e58;
+  color: #fff;
+}
+
+/* Report stats section */
+.stats-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.stats-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stats-run-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #e2e8f0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.stats-brands {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.brand-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.brand-stat-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1a2332;
+  min-width: 140px;
+}
+
+.brand-stat-pills {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 99px;
+  font-size: 0.78rem;
+}
+
+.stat-pill-green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.stat-pill-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pill-label {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.pill-value {
+  font-weight: 700;
+}
+
+.btn-xs {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Next step banner */
+.next-step-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.next-step-text {
+  font-size: 0.925rem;
+  color: #065f46;
+  font-weight: 500;
+}

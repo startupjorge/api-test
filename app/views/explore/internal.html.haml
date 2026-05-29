@@ -1,3 +1,15 @@
+.admin-flow-bar
+  .flow-step.flow-step-done= link_to "1 · API Key", settings_path
+  .flow-step-arrow →
+  .flow-step.flow-step-active 2 · Ask
+  .flow-step-arrow →
+  .flow-step= link_to "3 · Reports", reports_path
+
+- if current_api_key.blank?
+  .alert{style: "background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;"}
+    %strong No API key set.
+    = link_to "Add your Gumshoe API key in Settings →", settings_path, style: "margin-left: 0.5rem; font-weight: 600;"
+
 .explore-page
   .explore-hero
     %h1.explore-title What do you want the Gumshoe API to do?
@@ -66,8 +78,8 @@
 
     - if @result_type && !@result_error
       .explore-share-row
-        %span.share-hint Ready to share this with your customer?
-        = link_to "📤 Share with Customer", explore_customer_path(query: @query), class: "btn btn-success"
+        %span.share-hint Ready to share these results with your customer?
+        = link_to "📤 Share Externally", explore_customer_path(query: @query), class: "btn btn-share"
 
 :javascript
   function setExploreQuery(text) {
