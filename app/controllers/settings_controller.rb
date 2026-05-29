@@ -1,5 +1,4 @@
 class SettingsController < ApplicationController
-  before_action :require_employee
 
   def show
   end

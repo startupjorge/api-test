@@ -2,37 +2,49 @@
 
 .page-header
   %h1 Invite Customers
-  %p.text-muted Add customer emails so they can log in and access the same reports you see
+  %p.text-muted Add customers and optionally pre-set their API key — or let them add their own
 
-.panel{style: "max-width: 680px;"}
+.panel{style: "max-width: 720px;"}
   .card-header
-    %h3 How to add a customer
+    %h3 Step 1 — Add customer emails
   .card-body
-    %ol{style: "margin: 0; padding-left: 1.25rem; line-height: 2.2; color: #374151;"}
-      %li
-        Go to your
-        %strong Railway project → api-test service → Variables
-      %li
-        Add or update the variable:
-        %br
-        %code{style: "background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.875rem;"} CUSTOMER_EMAILS
-        with a comma-separated list of customer emails
-      %li
-        %strong Example:
-        %br
-        %code{style: "background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.875rem; word-break: break-all;"} vivek@acme.com,jane@company.com,bob@startup.io
-      %li Railway will redeploy automatically — customers can log in within ~3 minutes
+    %p{style: "color: #374151; margin-bottom: 0.75rem;"} In Railway: <strong>api-test → Variables → CUSTOMER_EMAILS</strong>
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} vivek@acme.com,jane@company.com
+    %p.text-muted{style: "font-size: 0.8rem;"} Comma-separated list. Railway redeploys automatically — customers can log in within ~3 minutes.
 
-- if @customer_emails.any?
-  .panel{style: "max-width: 680px; margin-top: 1.5rem;"}
+.panel{style: "max-width: 720px; margin-top: 1.5rem;"}
+  .card-header
+    %h3 Step 2 — Assign API keys (optional)
+  .card-body
+    %p{style: "color: #374151; margin-bottom: 0.75rem;"} In Railway: <strong>api-test → Variables → CUSTOMER_KEYS</strong>
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} vivek@acme.com:gsorg_live_abc123,jane@company.com:gsorg_live_xyz789
+    %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 0.5rem;"}
+      Format:
+      %code email:api_key
+      — comma-separated. Use a real key or a placeholder.
+    %p.text-muted{style: "font-size: 0.8rem;"}
+      If no key is assigned, the customer is prompted to enter their own when they log in.
+
+- if @customers.any?
+  .panel{style: "max-width: 720px; margin-top: 1.5rem;"}
     .card-header
       %h3 Currently invited
-    .card-body
-      %ul{style: "margin: 0; padding-left: 1.25rem; line-height: 2;"}
-        - @customer_emails.each do |email|
-          %li
-            %code{style: "font-size: 0.875rem;"}= email
+    %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+      %thead
+        %tr
+          %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Email
+          %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} API Key
+      %tbody
+        - @customers.each do |c|
+          %tr
+            %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= c[:email]
+            %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}
+              - if c[:api_key].present?
+                %span{style: "color: #059669; font-size: 0.8rem; font-family: monospace;"}= "#{c[:api_key][0..11]}…"
+                %span{style: "color: #059669; font-size: 0.75rem; margin-left: 0.4rem;"} ✓ set
+              - else
+                %span{style: "color: #f59e0b; font-size: 0.8rem;"} not set — customer will add their own
 - else
-  .card{style: "max-width: 680px; margin-top: 1.5rem;"}
+  .panel{style: "max-width: 720px; margin-top: 1.5rem;"}
     .card-body
-      %p.text-muted No customers invited yet. Set the CUSTOMER_EMAILS variable in Railway to get started.
+      %p.text-muted No customers invited yet. Set CUSTOMER_EMAILS in Railway to get started.

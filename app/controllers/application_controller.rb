@@ -37,9 +37,13 @@ class ApplicationController < ActionController::Base
   end
 
   def current_api_key
-    session[:gumshoe_api_key].presence ||
-      ENV["GUMSHOE_API_KEY"].presence ||
-      Rails.application.credentials.dig(:gumshoe, :api_key)
+    if current_customer
+      session[:gumshoe_api_key].presence
+    else
+      session[:gumshoe_api_key].presence ||
+        ENV["GUMSHOE_API_KEY"].presence ||
+        Rails.application.credentials.dig(:gumshoe, :api_key)
+    end
   rescue
     nil
   end
