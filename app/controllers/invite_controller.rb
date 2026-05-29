@@ -22,10 +22,26 @@ class InviteController < ApplicationController
     customer.api_key = api_key if api_key.present?
     customer.save!
 
-    token = Rails.application.message_verifier(:access).generate(
-      { email: email, api_key: api_key },
-      expires_in: 90.days
-    )
+    expiry, @expires_label = case params[:expires_in]
+    when "1_day"   then [1.day,    "Expires in 24 hours"]
+    when "7_days"  then [7.days,   "Expires in 7 days"]
+    when "30_days" then [30.days,  "Expires in 30 days"]
+    when "90_days" then [90.days,  "Expires in 90 days"]
+    when "1_year"  then [1.year,   "Expires in 1 year"]
+    when "never"   then [nil,      "Does not expire"]
+    else                [30.days,  "Expires in 30 days"]
+    end
+
+    token = if expiry
+      Rails.application.message_verifier(:access).generate(
+        { email: email, api_key: api_key },
+        expires_in: expiry
+      )
+    else
+      Rails.application.message_verifier(:access).generate(
+        { email: email, api_key: api_key }
+      )
+    end
 
     @access_link   = access_link_url(token)
     @invited_email = email

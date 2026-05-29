@@ -27,6 +27,12 @@
               autocomplete: "off"
           %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.4;"}
             Leave blank — customer will be prompted to enter their own
+        .form-group{style: "margin-bottom: 0.5rem;"}
+          = f.label :expires_in, "Link Expires", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+          = f.select :expires_in,
+              [["24 hours", "1_day"], ["7 days", "7_days"], ["30 days", "30_days"], ["90 days", "90_days"], ["1 year", "1_year"], ["Never", "never"]],
+              { selected: "30_days" },
+              { class: "form-input" }
         = f.submit "Generate Link →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
 
   / ── Link output ─────────────────────────────────────────────
@@ -36,7 +42,7 @@
         %h3 Access Link for #{@invited_email}
       .card-body
         %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 0.75rem;"}
-          Share this link with the customer. It expires in 90 days. They can also log in directly at
+          Share this link with the customer. #{@expires_label}. They can also log in directly at
           = link_to "the login page", login_path
           using their email.
         .form-group
