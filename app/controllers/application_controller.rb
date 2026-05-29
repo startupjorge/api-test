@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_login
 
-  helper_method :current_employee, :current_customer, :logged_in?, :employee?
+  helper_method :current_employee, :current_customer, :logged_in?, :employee?, :current_api_key
 
   private
 
