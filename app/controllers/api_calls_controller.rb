@@ -5,5 +5,4 @@ class ApiCallsController < ApplicationController
 
   def rank_trends; end
   def not_mentioned; end
-  def natural_language; end
 end

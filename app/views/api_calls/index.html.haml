@@ -37,20 +37,6 @@
     .feature-card-actions
       = link_to "Details →", api_query_not_mentioned_path, class: "btn btn-primary btn-sm"
 
-  .feature-card
-    .feature-card-icon 💬
-    %h3 Natural Language Query
-    %p.text-muted What it does
-    %p Ask a question in plain English — the app detects the intent and runs the matching API call automatically. No report ID required upfront.
-    %p.text-muted{style: "font-size: 0.825rem; margin-top: 0.75rem;"} Example queries
-    %ul{style: "font-size: 0.875rem; padding-left: 1.25rem; margin-bottom: 0.75rem;"}
-      %li "Show rank trends for report 22110"
-      %li "Not mentioned for brand shipiumcom in report 22110 run 1"
-      %li "List my reports"
-    %p.text-muted{style: "font-size: 0.825rem;"} How to run it
-    %p{style: "font-size: 0.875rem;"} Go to Explore Gumshoe API and type your question.
-    .feature-card-actions
-      = link_to "Details →", api_query_natural_language_path, class: "btn btn-primary btn-sm"
 
 - if @query_history.any?
   .panel{style: "margin-top: 2rem; margin-bottom: 2rem;"}
