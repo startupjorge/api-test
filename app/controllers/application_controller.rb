@@ -17,16 +17,15 @@ class ApplicationController < ActionController::Base
   end
 
   def logged_in?
-    session[:api_key].present?
+    session[:employee_email].present? || session[:customer_email].present?
   end
 
   def employee?
-    email = session[:user_email].to_s
-    email.present? && email.end_with?("@gumshoe.ai")
+    session[:employee_email].present?
   end
 
   def current_user_email
-    session[:user_email]
+    session[:employee_email] || session[:customer_email]
   end
 
   def current_api_key
