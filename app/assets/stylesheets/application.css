@@ -1612,3 +1612,122 @@ body.page-mode-customer {}
   color: #065f46;
   font-weight: 500;
 }
+
+/* API How-To section */
+.api-how-to {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.api-how-to-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+  list-style: none;
+  user-select: none;
+}
+
+.api-how-to-toggle::-webkit-details-marker { display: none; }
+
+.api-how-to[open] .api-how-to-toggle {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.api-how-to-body {
+  padding: 1.5rem 1.25rem;
+}
+
+.api-how-to-intro {
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+.api-how-to-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.api-how-to-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1a2332;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-content strong {
+  display: block;
+  font-size: 0.875rem;
+  color: #1e293b;
+  margin-bottom: 0.35rem;
+}
+
+.step-content .text-muted {
+  font-size: 0.825rem;
+  line-height: 1.5;
+}
+
+.api-endpoint {
+  display: inline-block;
+  background: #1e293b;
+  color: #7dd3fc;
+  font-family: monospace;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+}
+
+.api-curl {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0.5rem 0 0;
+  line-height: 1.5;
+}
+
+.api-how-to-docs {
+  font-size: 0.825rem;
+  color: #64748b;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.api-how-to-docs a {
+  color: #2563eb;
+}

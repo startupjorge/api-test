@@ -125,6 +125,72 @@
       - else
         %p.text-muted No data found.
 
+- if @query_type.present? && (@chart_datasets.present? || @not_mentioned || @error)
+  %details.api-how-to{style: "margin-top: 2rem;"}
+    %summary.api-how-to-toggle
+      %span 🔌 How to call this API
+    .api-how-to-body
+      - if @query_type == "trends"
+        %p.api-how-to-intro
+          This chart is built by fetching all runs for a report, then pulling the raw results for each run and computing the % of conversations where each brand was ranked #1.
+        .api-how-to-steps
+          .api-how-to-step
+            %span.step-num 1
+            .step-content
+              %strong List runs for a report
+              %code.api-endpoint GET /v1/reports/#{@report_id}/runs
+              - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
+              - if runs_call
+                %pre.api-curl= runs_call[:curl]
+          .api-how-to-step
+            %span.step-num 2
+            .step-content
+              %strong Fetch raw results for each run
+              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal/raw
+              - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
+              - if raw_call
+                %pre.api-curl= raw_call[:curl]
+          .api-how-to-step
+            %span.step-num 3
+            .step-content
+              %strong Compute % Ranked #1
+              %p.text-muted For each answer in the raw response, check #{"`"}mentions[].rank == 1#{"`"} and tally by brand key. Divide by total answers to get the percentage.
+        %p.api-how-to-docs
+          Full API reference:
+          = link_to "app.gumshoe.ai/openapi", "https://app.gumshoe.ai/openapi", target: "_blank"
+
+      - elsif @query_type == "not_mentioned"
+        %p.api-how-to-intro
+          Not Mentioned is computed from the raw run results. Any conversation where your brand key does not appear in #{"`"}mentions[].brand.key#{"`"} is counted as not mentioned.
+        .api-how-to-steps
+          .api-how-to-step
+            %span.step-num 1
+            .step-content
+              %strong Fetch raw results for a run
+              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/#{@ordinal}/raw
+              - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
+              - if raw_call
+                %pre.api-curl= raw_call[:curl]
+          .api-how-to-step
+            %span.step-num 2
+            .step-content
+              %strong Filter for not mentioned
+              %p.text-muted For each answer, check whether #{"`"}mentions[].brand.key#{"`"} contains #{"`"}#{@brand_key}#{"`"}. If absent, that conversation was not mentioned.
+          .api-how-to-step
+            %span.step-num 3
+            .step-content
+              %strong Example filter logic
+              %pre.api-curl
+                :preserve
+                  not_mentioned = answers.reject do |answer|
+                    answer["mentions"].any? do |m|
+                      m.dig("brand", "key") == "#{@brand_key}"
+                    end
+                  end
+        %p.api-how-to-docs
+          Full API reference:
+          = link_to "app.gumshoe.ai/openapi", "https://app.gumshoe.ai/openapi", target: "_blank"
+
 :javascript
   (function() {
     const radios = document.querySelectorAll('input[name="query_type"]');

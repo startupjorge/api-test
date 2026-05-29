@@ -57,12 +57,13 @@ class ReportsController < ApplicationController
 
     case @query_type
     when "trends"
-      build_trends_data
+      build_trends_data(client)
     when "not_mentioned"
       @brand_key = params[:brand_key].presence || @brand_key
       @ordinal   = params[:ordinal].presence || "1"
       build_not_mentioned_data(client)
     end
+    @api_calls = client.api_calls
   rescue => e
     redirect_to reports_path, alert: e.message
   end
@@ -137,9 +138,8 @@ class ReportsController < ApplicationController
     nil
   end
 
-  def build_trends_data
+  def build_trends_data(client = GumshoeClient.new(current_api_key))
     begin
-      client = GumshoeClient.new(current_api_key)
       runs = client.get_runs(params[:id])
 
       mutex = Mutex.new
