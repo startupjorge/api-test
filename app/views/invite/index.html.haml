@@ -66,9 +66,24 @@
         %tr
           %th{style: "text-align: left; padding: 0.5rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} Email
           %th{style: "text-align: left; padding: 0.5rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} API Key
+          %th{style: "text-align: left; padding: 0.5rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} Invite Link
       %tbody
         - @customers.each do |customer|
           %tr
-            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #1e293b;"}= customer.email
-            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-family: monospace; font-size: 0.8rem;"}
+            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #1e293b; white-space: nowrap;"}= customer.email
+            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-family: monospace; font-size: 0.8rem; white-space: nowrap;"}
               = customer.api_key.present? ? "#{customer.api_key[0..12]}…" : "—"
+            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9;"}
+              - if customer.invite_token.present?
+                - link = access_link_url(customer.invite_token)
+                - expired = customer.invite_expires_at.present? && customer.invite_expires_at < Time.current
+                - if expired
+                  %span{style: "color: #dc2626; font-size: 0.78rem;"} Expired
+                - else
+                  .invite-link-row
+                    %input{type: "text", value: link, readonly: true, style: "font-family: monospace; font-size: 0.72rem; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.25rem 0.5rem; width: 260px; color: #475569;", onclick: "this.select()"}
+                    %button.btn.btn-secondary.btn-sm{onclick: "navigator.clipboard.writeText('#{link}').then(() => { this.textContent = '✓'; setTimeout(() => this.textContent = 'Copy', 1500); }); return false;"} Copy
+                    - if customer.invite_expires_at.present?
+                      %span{style: "font-size: 0.72rem; color: #94a3b8; white-space: nowrap;"}= "exp. #{customer.invite_expires_at.strftime('%b %d, %Y')}"
+              - else
+                %span{style: "color: #94a3b8; font-size: 0.8rem;"} —

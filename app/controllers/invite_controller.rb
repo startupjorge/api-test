@@ -18,10 +18,6 @@ class InviteController < ApplicationController
       render :index, status: :unprocessable_entity and return
     end
 
-    customer = Customer.find_or_initialize_by(email: email)
-    customer.api_key = api_key if api_key.present?
-    customer.save!
-
     expiry, @expires_label = case params[:expires_in]
     when "1_day"   then [1.day,    "Expires in 24 hours"]
     when "7_days"  then [7.days,   "Expires in 7 days"]
@@ -42,6 +38,12 @@ class InviteController < ApplicationController
         { email: email, api_key: api_key }
       )
     end
+
+    customer = Customer.find_or_initialize_by(email: email)
+    customer.api_key           = api_key if api_key.present?
+    customer.invite_token      = token
+    customer.invite_expires_at = expiry ? Time.current + expiry : nil
+    customer.save!
 
     @access_link   = access_link_url(token)
     @invited_email = email

@@ -1853,3 +1853,10 @@ body.page-mode-customer {}
   font-size: 0.875rem;
   user-select: none;
 }
+
+.invite-link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
