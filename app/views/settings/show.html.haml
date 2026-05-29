@@ -1,5 +1,14 @@
 - content_for :title, "API Key · Gumshoe"
 
+.admin-flow-bar
+  .flow-step.flow-step-active 1 · API Key
+  .flow-step-arrow →
+  .flow-step= link_to "2 · Ask", explore_internal_path
+  .flow-step-arrow →
+  .flow-step= link_to "3 · Reports", reports_path
+  .flow-step-arrow →
+  .flow-step= link_to "4 · Share", invite_index_path
+
 .page-header
   %h1 API Key
   %p.text-muted Your key is stored in your browser session only — never saved to the server

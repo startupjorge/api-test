@@ -1,5 +1,14 @@
 - content_for :title, "Invite · Gumshoe"
 
+.admin-flow-bar
+  .flow-step.flow-step-done= link_to "1 · API Key", settings_path
+  .flow-step-arrow →
+  .flow-step.flow-step-done= link_to "2 · Ask", explore_internal_path
+  .flow-step-arrow →
+  .flow-step.flow-step-done= link_to "3 · Reports", reports_path
+  .flow-step-arrow →
+  .flow-step.flow-step-active 4 · Share
+
 .page-header
   %h1 Invite Customers
   %p.text-muted Add customers and optionally pre-set their Gumshoe API key
