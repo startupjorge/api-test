@@ -24,7 +24,7 @@ Rails.application.routes.draw do
   get "explore/internal", to: redirect("/")
 
   get "api_calls",   to: redirect("/api_runs")
-  get "api_queries", to: redirect("/api_runs")
+  get "api_queries", to: redirect("/api_runs"), as: :api_queries_redirect
   get "api_runs",                    to: "api_calls#index",             as: :api_queries
   get "api_runs/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
   get "api_runs/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
