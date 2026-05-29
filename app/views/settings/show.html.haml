@@ -23,7 +23,7 @@
     = form_with url: settings_path, method: :patch, local: true do |f|
       .form-group{style: "margin-bottom: 1rem;"}
         = f.label :api_key, "API Key", style: "display: block; font-weight: 600; margin-bottom: 0.5rem;"
-        = f.text_field :api_key,
+        = f.password_field :api_key,
             value: session[:gumshoe_api_key],
             placeholder: "gsorg_live_...",
             style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;",
