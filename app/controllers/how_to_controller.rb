@@ -1,5 +1,4 @@
 class HowToController < ApplicationController
-  before_action :require_employee, only: [:index, :try_it_live]
 
   def index
   end

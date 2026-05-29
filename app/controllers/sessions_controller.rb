@@ -19,7 +19,7 @@ class SessionsController < ApplicationController
     elsif CustomerAccess.allowed?(email)
       session[:customer_email] = email
       session.delete(:employee_email)
-      redirect_to explore_customer_path, notice: "Welcome, #{name}!"
+      redirect_to reports_path, notice: "Welcome, #{name}!"
     else
       flash.now[:alert] = "That email isn't on the access list. Ask your Gumshoe contact to add you."
       render :new, status: :unprocessable_entity

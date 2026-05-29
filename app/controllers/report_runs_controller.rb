@@ -1,7 +1,6 @@
 class ReportRunsController < ApplicationController
   include GumshoeApiUrls
 
-  before_action :require_employee, except: [:customer_not_mentioned]
   before_action :set_report_id
 
   def index

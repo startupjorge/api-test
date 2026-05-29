@@ -1,5 +1,4 @@
 class ExploreController < ApplicationController
-  before_action :require_employee, only: [:internal]
 
   def internal
     process_query if params[:query].present?
