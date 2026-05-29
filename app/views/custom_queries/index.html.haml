@@ -17,7 +17,7 @@
           %th{style: "border-bottom: 1px solid #e2e8f0;"}
       %tbody
         - @custom_queries.each do |q|
-          %tr
+          %tr{id: "qrow-#{q.query_key}"}
             %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9;"}
               %span{style: "margin-right: 0.4rem;"}= q.icon
               %strong= q.name
@@ -31,9 +31,75 @@
                 %span.status.pending Inactive
             %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; text-align: right;"}
               .btn-group
+                %button.btn.btn-primary.btn-sm{onclick: "toggleReportPicker('#{q.query_key}', this)", style: "display: inline-flex; align-items: center; gap: 0.3rem;"}
+                  ▶ Run on Report
                 = link_to "Edit", edit_custom_query_path(q), class: "btn btn-secondary btn-sm"
                 = button_to "Delete", custom_query_path(q), method: :delete, class: "btn btn-secondary btn-sm", style: "color: #dc2626;", data: { turbo_confirm: "Remove \"#{q.name}\"?" }
+          %tr{id: "picker-#{q.query_key}", style: "display: none;"}
+            %td{colspan: 4, style: "padding: 0; border-bottom: 1px solid #e2e8f0;"}
+              .report-picker{id: "picker-inner-#{q.query_key}", style: "background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 1rem 1.25rem;"}
+                %p{style: "font-size: 0.85rem; font-weight: 600; color: #374151; margin: 0 0 0.75rem;"} Pick a report to run this query on:
+                .picker-reports{id: "picker-reports-#{q.query_key}", style: "display: flex; flex-wrap: wrap; gap: 0.5rem;"}
+                  %span{style: "color: #9ca3af; font-size: 0.85rem;"} Loading reports…
 - else
   .panel
     .card-body
       %p.text-muted No custom queries yet. Add one to get started.
+
+:javascript
+  var _reportsCache = null;
+
+  function toggleReportPicker(queryKey, btn) {
+    var row = document.getElementById('picker-' + queryKey);
+    var isOpen = row.style.display !== 'none';
+    // Close all pickers first
+    document.querySelectorAll('[id^="picker-"]').forEach(function(el) {
+      if (!el.id.startsWith('picker-inner') && !el.id.startsWith('picker-reports')) {
+        el.style.display = 'none';
+      }
+    });
+    document.querySelectorAll('[id^="qrow-"]').forEach(function(el) {
+      el.style.background = '';
+    });
+    if (isOpen) return; // toggle off
+    row.style.display = '';
+    document.getElementById('qrow-' + queryKey).style.background = '#eff6ff';
+    btn.textContent = '▼ Pick Report';
+    loadReports(queryKey);
+  }
+
+  function loadReports(queryKey) {
+    var container = document.getElementById('picker-reports-' + queryKey);
+    if (_reportsCache) {
+      renderReports(container, _reportsCache, queryKey);
+      return;
+    }
+    fetch('/custom_queries/api_reports')
+      .then(function(r) { return r.json(); })
+      .then(function(reports) {
+        _reportsCache = reports;
+        renderReports(container, reports, queryKey);
+      })
+      .catch(function(err) {
+        container.innerHTML = '<span style="color:#dc2626;font-size:0.85rem;">Failed to load reports.</span>';
+      });
+  }
+
+  function renderReports(container, reports, queryKey) {
+    if (!reports || reports.length === 0) {
+      container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No reports found.</span>';
+      return;
+    }
+    container.innerHTML = '';
+    reports.forEach(function(r) {
+      var id = r.id || r['id'];
+      var title = r.title || r['title'] || id;
+      var btn = document.createElement('a');
+      btn.href = '/reports/' + id + '?query_type=' + queryKey;
+      btn.style.cssText = 'display:inline-block;padding:0.4rem 0.85rem;background:#fff;border:1.5px solid #2563eb;border-radius:6px;font-size:0.82rem;font-weight:500;color:#2563eb;text-decoration:none;transition:background 0.15s;';
+      btn.onmouseover = function() { this.style.background='#eff6ff'; };
+      btn.onmouseout  = function() { this.style.background='#fff'; };
+      btn.textContent = title;
+      container.appendChild(btn);
+    });
+  }
