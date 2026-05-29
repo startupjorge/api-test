@@ -485,16 +485,35 @@
       apiPane.style.display     = (tab === 'api') ? '' : 'none';
     };
 
-    // Copy all text content from the API instructions pane
+    // Copy API instructions with clean formatting
     window.copyApiInstructions = function(panelId, btn) {
       var pane = document.getElementById(panelId);
       if (!pane) return;
-      var text = [];
-      pane.querySelectorAll('.api-how-to-intro, .api-how-to-step strong, .api-how-to-step .api-endpoint, .api-how-to-step pre, .api-how-to-step .text-muted').forEach(function(el) {
-        var t = el.textContent.trim();
-        if (t) text.push(t);
+      var lines = [];
+
+      // Intro paragraph
+      var intro = pane.querySelector('.api-how-to-intro');
+      if (intro) lines.push(intro.textContent.trim(), '');
+
+      // Steps
+      pane.querySelectorAll('.api-how-to-step').forEach(function(step, i) {
+        var num  = step.querySelector('.step-num');
+        var head = step.querySelector('strong');
+        if (head) lines.push((num ? num.textContent.trim() + '. ' : '') + head.textContent.trim());
+
+        step.querySelectorAll('.api-endpoint, pre, .text-muted').forEach(function(el) {
+          var t = el.textContent.trim();
+          if (!t) return;
+          if (el.matches('pre')) {
+            lines.push(t);
+          } else {
+            lines.push(t);
+          }
+        });
+        lines.push('');
       });
-      navigator.clipboard.writeText(text.join('\n\n')).then(function() {
+
+      navigator.clipboard.writeText(lines.join('\n')).then(function() {
         var orig = btn.textContent;
         btn.textContent = '✓ Copied!';
         setTimeout(function() { btn.textContent = orig; }, 2000);
