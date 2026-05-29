@@ -16,7 +16,7 @@
     %p.text-muted{style: "font-size: 0.825rem;"} How to run it
     %p{style: "font-size: 0.875rem;"} Go to My Reports → click a report → View Chart. Or call the raw endpoint and count mentions where rank == 1, divided by total answers.
     .feature-card-actions
-      = link_to "Run it →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "Details →", api_query_rank_trends_path, class: "btn btn-primary btn-sm"
 
   .feature-card
     .feature-card-icon 🔍
@@ -28,7 +28,7 @@
     %p.text-muted{style: "font-size: 0.825rem;"} How to run it
     %p{style: "font-size: 0.875rem;"} Go to My Reports → click a report → View Results. Or call the raw endpoint and filter answers where the brand key does not appear in any mention.
     .feature-card-actions
-      = link_to "Run it →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "Details →", api_query_not_mentioned_path, class: "btn btn-primary btn-sm"
 
   .feature-card
     .feature-card-icon 💬
@@ -43,7 +43,7 @@
     %p.text-muted{style: "font-size: 0.825rem;"} How to run it
     %p{style: "font-size: 0.875rem;"} Go to Explore Gumshoe API and type your question.
     .feature-card-actions
-      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
+      = link_to "Details →", api_query_natural_language_path, class: "btn btn-primary btn-sm"
 
 - if @query_history.any?
   .panel{style: "margin-top: 2rem; margin-bottom: 2rem;"}

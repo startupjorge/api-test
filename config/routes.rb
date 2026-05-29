@@ -26,7 +26,11 @@ Rails.application.routes.draw do
   get "explore/internal", to: "explore#internal", as: :explore_internal
   get "explore/customer", to: "explore#customer", as: :explore_customer
 
-  get  "api_calls", to: "api_calls#index", as: :api_calls
+  get "api_calls", to: redirect("/api_queries")
+  get "api_queries",                    to: "api_calls#index",             as: :api_queries
+  get "api_queries/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
+  get "api_queries/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
+  get "api_queries/natural_language",   to: "api_calls#natural_language",  as: :api_query_natural_language
 
   resources :invite, only: [:index]
 

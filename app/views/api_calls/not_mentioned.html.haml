@@ -1,0 +1,49 @@
+- content_for :title, "Not Mentioned · API Queries & How-To · Gumshoe"
+
+.page-header
+  %p.text-muted= link_to "← API Queries & How-To", api_queries_path
+  %h1 🔍 Not Mentioned
+  %p.text-muted Finds every AI conversation where a specific brand was completely absent from the answer.
+
+.panel
+  .card-header
+    %h3 What it does
+  .card-body
+    %p For a given report run and brand, this query scans every answer and collects the ones where that brand's key does not appear in any mention. These are the conversations where the AI never brought up your brand at all.
+    %p This surfaces competitive gaps — questions where rival brands appear but yours doesn't, or entire topic areas where you have no AI visibility.
+
+.panel{style: "margin-top: 1.5rem;"}
+  .card-header
+    %h3 API endpoint
+  .card-body
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Fetch raw data for a run
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 1rem;"} GET /reports/:id/runs/:ordinal/raw
+    %p{style: "font-size: 0.875rem; color: #374151;"} The raw response contains personas → questions → answers → mentions. Each mention has a <code>brand.key</code> field. Filter answers where none of the mentions match your brand key — those are the "not mentioned" answers.
+
+.panel{style: "margin-top: 1.5rem;"}
+  .card-header
+    %h3 How to run it in this app
+  .card-body
+    %ol{style: "font-size: 0.875rem; color: #374151; padding-left: 1.25rem; line-height: 2;"}
+      %li Go to #{link_to "My Reports", reports_path} and click a report
+      %li Click View Results on a run to see not-mentioned answers for your brand
+      %li Or use #{link_to "Explore Gumshoe API", explore_internal_path} and type: <code>Not mentioned for brand shipiumcom in report 22110 run 1</code>
+
+.panel{style: "margin-top: 1.5rem;"}
+  .card-header
+    %h3 Run it directly with curl
+  .card-body
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Fetch raw run data
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"}
+      curl -H "Authorization: Bearer YOUR_API_KEY" \
+      #{" "}https://api.gumshoe.ai/reports/22110/runs/1/raw
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Filter not-mentioned answers
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap;"}
+      # For each answer in personas[].questions[].answers[]
+      # Check: mentions[].brand.key does NOT include "your-brand-key"
+      # Those answers = not mentioned
+
+.panel{style: "margin-top: 1.5rem;"}
+  .card-body{style: "display: flex; align-items: center; gap: 1rem;"}
+    %span{style: "color: #374151;"} Try it now in Explore →
+    = link_to "Not mentioned for brand shipiumcom in report 22110 run 1", explore_internal_path(query: "Not mentioned for brand shipiumcom in report 22110 run 1"), class: "btn btn-primary btn-sm"
