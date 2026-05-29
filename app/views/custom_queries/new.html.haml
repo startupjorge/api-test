@@ -1,7 +1,258 @@
-- content_for :title, "New Query · Gumshoe"
+- content_for :title, "Add Query · Gumshoe"
 
 .page-header
-  %h1 Add Query
-  %p.text-muted This query will appear on every report page
+  %h1 Add a Custom Query
+  %p.text-muted Pick a live field from the API response — no guessing required.
 
-= render "form", custom_query: @custom_query
+.query-builder
+
+  / ── Step 1: Pick a report ───────────────────────────────────
+  .qb-step
+    .qb-step-header
+      .qb-step-num 1
+      %strong Pick a report to sample
+    .qb-step-body
+      .qb-report-row
+        %select#qb-report-select.form-input{style: "max-width: 360px;"}
+          %option{value: ""} Loading reports…
+        %button#qb-fetch-btn.btn.btn-primary{onclick: "qbFetchSample()", disabled: true} Fetch Sample Run →
+      %p#qb-fetch-status.text-muted{style: "font-size: 0.82rem; margin-top: 0.5rem; display: none;"}
+
+  / ── Step 2: Pick a field ────────────────────────────────────
+  #qb-step2{style: "display: none;"}
+    .qb-step{style: "margin-top: 1.5rem;"}
+      .qb-step-header
+        .qb-step-num 2
+        %strong Click any numeric field to use it as your query
+      .qb-step-body
+        %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 0.75rem;"}
+          Numeric fields are highlighted.
+          %strong Click one
+          to select it.
+        #qb-json-explorer{style: "background: #0f172a; border-radius: 8px; padding: 1.25rem 1.5rem; overflow: auto; max-height: 480px; font-family: monospace; font-size: 0.82rem; line-height: 1.8;"}
+          Loading…
+
+  / ── Step 3: Configure & save ────────────────────────────────
+  #qb-step3{style: "display: none;"}
+    .qb-step{style: "margin-top: 1.5rem;"}
+      .qb-step-header
+        .qb-step-num 3
+        %strong Configure and save
+      .qb-step-body
+        .qb-selected-field{style: "background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.6rem 1rem; margin-bottom: 1.25rem; font-family: monospace; font-size: 0.85rem; color: #166534;"}
+          Selected field:
+          %strong#qb-selected-path —
+
+        = form_with url: custom_queries_path, method: :post, local: true do |f|
+          = f.hidden_field :custom_query, name: "custom_query[value_path]", id: "qb-value-path-input"
+
+          .two-col{style: "display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;"}
+            .form-group
+              = f.label :name, "Query Name", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+              %input#qb-name.form-input{type: "text", name: "custom_query[name]", placeholder: "e.g. Navigation Score"}
+            .form-group
+              = f.label :description, "Description", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+              %input#qb-description.form-input{type: "text", name: "custom_query[description]", placeholder: "What does this measure?"}
+
+          .two-col{style: "display: grid; grid-template-columns: 80px 1fr 1fr; gap: 1rem; margin-bottom: 1rem;"}
+            .form-group
+              %label{style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"} Icon
+              %input#qb-icon.form-input{type: "text", name: "custom_query[icon]", value: "📊", style: "font-size: 1.2rem; text-align: center;"}
+            .form-group
+              %label{style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"} Y-Axis Label
+              %input#qb-y-axis.form-input{type: "text", name: "custom_query[y_axis_label]", value: "Score"}
+            .form-group
+              %label{style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"} Active
+              %label{style: "display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; cursor: pointer;"}
+                %input{type: "checkbox", name: "custom_query[active]", value: "1", checked: true}
+                Show on report pages
+
+          .btn-group
+            %button.btn.btn-primary{type: "submit"} Save Query
+            = link_to "Cancel", custom_queries_path, class: "btn btn-secondary"
+
+:javascript
+  // ── Load reports on page boot ────────────────────────────────
+  (function() {
+    fetch('/custom_queries/api_reports')
+      .then(r => r.json())
+      .then(reports => {
+        var sel = document.getElementById('qb-report-select');
+        sel.innerHTML = '<option value="">— Select a report —</option>';
+        (reports || []).forEach(function(r) {
+          var brand = (r.brand || {});
+          var label = brand.name || r.title || r.id;
+          var opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = label + ' (' + r.id + ')';
+          sel.appendChild(opt);
+        });
+        document.getElementById('qb-fetch-btn').disabled = false;
+      })
+      .catch(function(e) {
+        var sel = document.getElementById('qb-report-select');
+        sel.innerHTML = '<option value="">Error loading reports — is your API key set?</option>';
+      });
+  })();
+
+  // ── Fetch sample run ─────────────────────────────────────────
+  function qbFetchSample() {
+    var reportId = document.getElementById('qb-report-select').value;
+    if (!reportId) return;
+    var status = document.getElementById('qb-fetch-status');
+    status.style.display = 'block';
+    status.textContent = 'Fetching latest run…';
+    document.getElementById('qb-fetch-btn').disabled = true;
+
+    fetch('/custom_queries/api_sample_run?report_id=' + encodeURIComponent(reportId))
+      .then(r => r.json())
+      .then(function(resp) {
+        if (resp.error) {
+          status.textContent = 'Error: ' + resp.error;
+          document.getElementById('qb-fetch-btn').disabled = false;
+          return;
+        }
+        status.textContent = 'Run #' + resp.ordinal + ' loaded. Click a numeric field below.';
+        document.getElementById('qb-step2').style.display = 'block';
+        document.getElementById('qb-fetch-btn').disabled = false;
+        renderJson(resp.data, document.getElementById('qb-json-explorer'), '');
+      })
+      .catch(function(e) {
+        status.textContent = 'Error: ' + e.message;
+        document.getElementById('qb-fetch-btn').disabled = false;
+      });
+  }
+
+  // ── Render interactive JSON tree ─────────────────────────────
+  function renderJson(obj, container, path) {
+    container.innerHTML = '';
+    container.appendChild(buildNode(obj, path, 0));
+  }
+
+  function buildNode(val, path, depth) {
+    var frag = document.createDocumentFragment();
+
+    if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+      var keys = Object.keys(val);
+      keys.forEach(function(k) {
+        var childPath = path ? path + '.' + k : k;
+        var line = document.createElement('div');
+        line.style.paddingLeft = (depth * 16) + 'px';
+
+        var keySpan = document.createElement('span');
+        keySpan.style.color = '#7dd3fc';
+        keySpan.textContent = k + ': ';
+        line.appendChild(keySpan);
+
+        var child = val[k];
+        if (child !== null && typeof child === 'object') {
+          var bracket = Array.isArray(child) ? '[' : '{';
+          var closeBracket = Array.isArray(child) ? ']' : '}';
+          var toggle = document.createElement('span');
+          toggle.style.color = '#94a3b8';
+          toggle.style.cursor = 'pointer';
+          toggle.textContent = bracket + ' ▾';
+          var inner = document.createElement('div');
+          inner.appendChild(buildNode(child, childPath, depth + 1));
+          var close = document.createElement('div');
+          close.style.paddingLeft = (depth * 16) + 'px';
+          close.style.color = '#94a3b8';
+          close.textContent = closeBracket;
+          toggle.addEventListener('click', function() {
+            var hidden = inner.style.display === 'none';
+            inner.style.display = hidden ? '' : 'none';
+            toggle.textContent = bracket + (hidden ? ' ▾' : ' ▸');
+          });
+          line.appendChild(toggle);
+          frag.appendChild(line);
+          frag.appendChild(inner);
+          frag.appendChild(close);
+        } else {
+          var valSpan = document.createElement('span');
+          if (typeof child === 'number') {
+            valSpan.style.color = '#4ade80';
+            valSpan.style.cursor = 'pointer';
+            valSpan.style.fontWeight = '700';
+            valSpan.style.background = 'rgba(74,222,128,0.12)';
+            valSpan.style.borderRadius = '3px';
+            valSpan.style.padding = '0 4px';
+            valSpan.textContent = child;
+            valSpan.title = 'Click to use: ' + childPath;
+            valSpan.addEventListener('click', function() { qbSelectField(childPath, child); });
+          } else if (typeof child === 'boolean') {
+            valSpan.style.color = '#fb923c';
+            valSpan.textContent = child;
+          } else if (child === null) {
+            valSpan.style.color = '#94a3b8';
+            valSpan.textContent = 'null';
+          } else {
+            valSpan.style.color = '#fbbf24';
+            valSpan.textContent = JSON.stringify(child);
+          }
+          line.appendChild(valSpan);
+          frag.appendChild(line);
+        }
+      });
+
+    } else if (Array.isArray(val)) {
+      val.slice(0, 3).forEach(function(item, i) {
+        var childPath = path + '[' + i + ']';
+        var line = document.createElement('div');
+        line.style.paddingLeft = (depth * 16) + 'px';
+        var idxSpan = document.createElement('span');
+        idxSpan.style.color = '#94a3b8';
+        idxSpan.textContent = i + ': ';
+        line.appendChild(idxSpan);
+        if (item !== null && typeof item === 'object') {
+          var inner = document.createElement('div');
+          inner.appendChild(buildNode(item, childPath, depth + 1));
+          line.textContent = i + ': {';
+          line.style.color = '#94a3b8';
+          frag.appendChild(line);
+          frag.appendChild(inner);
+          var close = document.createElement('div');
+          close.style.paddingLeft = (depth * 16) + 'px';
+          close.style.color = '#94a3b8';
+          close.textContent = '}';
+          frag.appendChild(close);
+        } else {
+          frag.appendChild(line);
+        }
+      });
+      if (val.length > 3) {
+        var more = document.createElement('div');
+        more.style.paddingLeft = (depth * 16) + 'px';
+        more.style.color = '#64748b';
+        more.textContent = '… ' + (val.length - 3) + ' more items';
+        frag.appendChild(more);
+      }
+    }
+
+    return frag;
+  }
+
+  // ── Field selected ───────────────────────────────────────────
+  function qbSelectField(path, sampleValue) {
+    document.getElementById('qb-value-path-input').value = path;
+    document.getElementById('qb-selected-path').textContent = path + '  =  ' + sampleValue;
+
+    // Auto-suggest name from path
+    var parts = path.split('.');
+    var lastPart = parts[parts.length - 1];
+    var suggestedName = lastPart
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, function(s) { return s.toUpperCase(); })
+      .trim();
+    document.getElementById('qb-name').value = suggestedName;
+    document.getElementById('qb-description').value = '';
+    document.getElementById('qb-y-axis').value = 'Score';
+
+    document.getElementById('qb-step3').style.display = 'block';
+    document.getElementById('qb-step3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Highlight selected field in explorer
+    document.querySelectorAll('#qb-json-explorer span[data-selected]').forEach(function(s) {
+      s.removeAttribute('data-selected');
+      s.style.outline = '';
+    });
+  }

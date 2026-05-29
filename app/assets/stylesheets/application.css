@@ -1882,3 +1882,32 @@ body.page-mode-customer {}
   color: #fff;
   font-weight: 600;
 }
+
+/* Query builder */
+.query-builder { max-width: 860px; }
+.qb-step {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.qb-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+}
+.qb-step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #1e293b;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+}
+.qb-step-body { padding: 1.25rem; }
+.qb-report-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.qb-selected-field { font-size: 0.85rem; }

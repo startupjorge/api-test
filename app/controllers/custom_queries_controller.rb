@@ -36,6 +36,41 @@ class CustomQueriesController < ApplicationController
     redirect_to custom_queries_path, notice: "Query removed."
   end
 
+  # JSON proxy — returns reports list from Gumshoe API
+  def api_reports
+    client = GumshoeClient.new(current_api_key)
+    response = client.reports
+    parsed = response.parsed_response
+    reports = if parsed.is_a?(Hash)
+      parsed["data"] || parsed[:data] || parsed["reports"] || []
+    elsif parsed.is_a?(Array)
+      parsed
+    else
+      []
+    end
+    render json: reports
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # JSON proxy — returns latest run data for a report
+  def api_sample_run
+    report_id = params[:report_id]
+    client    = GumshoeClient.new(current_api_key)
+    runs      = client.get_runs(report_id)
+    latest    = runs.sort_by { |r| (r["ordinal"] || r[:ordinal]).to_i }.last
+    unless latest
+      render json: { error: "No runs found for this report." }, status: :not_found and return
+    end
+    ordinal  = latest["ordinal"] || latest[:ordinal]
+    response = client.report_run(report_id, ordinal)
+    parsed   = response.parsed_response
+    data     = parsed.is_a?(Hash) ? (parsed["data"] || parsed) : parsed
+    render json: { ordinal: ordinal, data: data }
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
 
   def custom_query_params

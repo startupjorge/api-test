@@ -25,5 +25,10 @@ Rails.application.routes.draw do
 
   resource :settings, only: [:show, :update]
 
-  resources :custom_queries
+  resources :custom_queries do
+    collection do
+      get :api_reports
+      get :api_sample_run
+    end
+  end
 end
