@@ -31,4 +31,11 @@ class SessionsController < ApplicationController
     session.delete(:customer_email)
     redirect_to login_path, notice: "You've been signed out."
   end
+
+  def goodbye
+    # Handles stale GET /logout links — just sign out and show login
+    session.delete(:employee_email)
+    session.delete(:customer_email)
+    redirect_to login_path, notice: "You've been signed out."
+  end
 end
