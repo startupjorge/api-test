@@ -30,6 +30,15 @@
             - if current_user_email.present?
               %span.nav-employee= current_user_email.split('@').first.capitalize
             = link_to "Sign out", logout_path, class: "nav-link nav-link-signout"
+    - if logged_in?
+      .flow-bar
+        .container
+          - steps = employee? ? [[settings_path, "1 · API Key"], [root_path, "2 · Test"], [reports_path, "3 · Reports"], [invite_index_path, "4 · Share"]] : [[settings_path, "1 · API Key"], [root_path, "2 · Test"], [reports_path, "3 · Reports"]]
+          - steps.each_with_index do |(path, label), i|
+            - active = path == root_path ? request.path == '/' : request.path.start_with?(path)
+            = link_to label, path, class: "flow-step #{active ? 'flow-step-active' : ''}"
+            - if i < steps.length - 1
+              %span.flow-step-arrow →
     .container
       - if notice
         .alert.alert-success= notice
