@@ -1,0 +1,76 @@
+.explore-page
+  .explore-hero
+    %h1.explore-title What do you want the Gumshoe API to do?
+    %p.explore-subtitle Type a question in plain English — the app will figure out which API calls to make and show you the results.
+
+  = form_with url: explore_internal_path, method: :get, local: true do |f|
+    .explore-input-row
+      = f.text_field :query, value: @query,
+          placeholder: "e.g. Show rank trends for report 22110",
+          class: "explore-input",
+          autofocus: !@query.present?,
+          autocomplete: "off"
+      = f.submit "Run →", class: "btn btn-primary explore-submit"
+
+  .explore-chips
+    %span.chips-label Try:
+    %button.chip{type: "button", onclick: "setExploreQuery('Show rank trends for report 22110')"} 📈 Rank trends
+    %button.chip{type: "button", onclick: "setExploreQuery('Not mentioned for brand shipiumcom in report 22110 run 1')"} 🔍 Not mentioned
+    %button.chip{type: "button", onclick: "setExploreQuery('List my reports')"} 📋 List reports
+
+- if @query.present?
+  .explore-results
+    - if @intent && @intent[:action] != :unknown
+      .intent-badge
+        - case @intent[:action]
+        - when :trends
+          📈 Rank Trends
+          - if @intent[:report_id]
+            for report
+            %code= @intent[:report_id]
+        - when :not_mentioned
+          🔍 Not Mentioned
+          - if @intent[:brand_key]
+            · brand
+            %code= @intent[:brand_key]
+          - if @intent[:report_id]
+            · report
+            %code= @intent[:report_id]
+            · run
+            %code= @intent[:ordinal]
+        - when :list_reports
+          📋 Listing all reports
+        - when :show_report
+          📄 Report
+          %code= @intent[:report_id]
+
+    - if @result_error
+      .alert.alert-danger= @result_error
+    - elsif @result_type == :trends
+      = render "trends_result"
+    - elsif @result_type == :not_mentioned
+      = render "not_mentioned_result"
+    - elsif @result_type == :reports
+      = render "reports_result"
+    - elsif @result_type == :report
+      .card
+        .card-body
+          %pre{style: "font-size: 0.8rem; overflow-x: auto;"}= JSON.pretty_generate(@report)
+    - elsif @intent && @intent[:action] == :unknown
+      .alert{style: "background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; padding: 1rem 1.25rem;"}
+        Couldn't figure out what to do with that. Try something like:
+        %ul{style: "margin: 0.5rem 0 0 1.25rem;"}
+          %li "Show rank trends for report 22110"
+          %li "Not mentioned for brand shipiumcom in report 22110 run 1"
+          %li "List my reports"
+
+    - if @result_type && !@result_error
+      .explore-share-row
+        %span.share-hint Ready to share this with your customer?
+        = link_to "📤 Share with Customer", explore_customer_path(query: @query), class: "btn btn-success"
+
+:javascript
+  function setExploreQuery(text) {
+    document.querySelector('.explore-input').value = text;
+    document.querySelector('.explore-input').focus();
+  }

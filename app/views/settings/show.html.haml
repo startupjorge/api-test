@@ -1,0 +1,35 @@
+.btn-group.mb-2
+  %span.badge.badge-internal Internal Testing
+  = link_to "📤 Share with Customer", customer_settings_path, class: "btn btn-success btn-sm", "data-tooltip" => "Opens the customer-facing version of this page — safe to send to your customer"
+
+.page-header
+  %h1 API Key Settings
+  %p.text-muted Your API key is stored in your browser session — it's never saved to the server
+
+- if notice
+  .alert.alert-success= notice
+
+.helper-box.helper-internal
+  %strong Where do I find my API key?
+  Log in to your Gumshoe account and copy your API key from the settings or developer section. Paste it below. The key is only active for your current browser session — you'll need to re-enter it if you open a new browser or clear your cookies.
+
+.panel{style: "max-width: 600px;"}
+  .card-header
+    %h3 Enter Your Gumshoe API Key
+  .card-body
+    = form_with url: settings_path, method: :patch, local: true do |f|
+      .form-group{style: "margin-bottom: 1rem;"}
+        = f.label :api_key, "API Key", style: "display: block; font-weight: 600; margin-bottom: 0.5rem;"
+        = f.text_field :api_key,
+            value: session[:gumshoe_api_key],
+            placeholder: "gsorg_live_...",
+            style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;",
+            autocomplete: "off"
+        %p.text-muted{style: "margin-top: 0.4rem; font-size: 0.8rem;"}
+          - if session[:gumshoe_api_key].present?
+            %span{style: "color: #059669;"} ✓ API key is set for this session
+          - else
+            No key set — enter one below to connect to the Gumshoe API
+      = f.submit "Save API Key", class: "btn btn-primary"
+      - if session[:gumshoe_api_key].present?
+        = f.submit "Clear Key", name: "api_key", value: "", class: "btn btn-secondary", style: "margin-left: 0.5rem;"

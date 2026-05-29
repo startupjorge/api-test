@@ -7,6 +7,14 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def current_api_key
+    session[:gumshoe_api_key].presence ||
+      ENV["GUMSHOE_API_KEY"].presence ||
+      Rails.application.credentials.dig(:gumshoe, :api_key)
+  rescue
+    nil
+  end
+
   def gumshoe_pagination_params
     params.permit(:limit, :sort, :token).to_h.compact_blank
   end

@@ -59,6 +59,32 @@ class GumshoeClient
     response
   end
 
+  # Returns parsed array of runs or raises on error.
+  def get_runs(report_id)
+    response = report_runs(report_id)
+    raise "Gumshoe API error #{response.code}: #{response.message}" unless response.success?
+
+    parsed = response.parsed_response
+    if parsed.is_a?(Hash)
+      parsed["data"] || parsed[:data] || parsed["runs"] || parsed[:runs] || []
+    elsif parsed.is_a?(Array)
+      parsed
+    else
+      []
+    end
+  end
+
+  # Returns parsed raw hash, cached for 10 minutes.
+  def get_raw(report_id, ordinal)
+    cache_key = "gumshoe/raw/#{report_id}/#{ordinal}"
+    Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      response = report_run_raw(report_id, ordinal)
+      raise "Gumshoe API error #{response.code}: #{response.message}" unless response.success?
+
+      response.parsed_response
+    end
+  end
+
   private
 
   def request_options(query = {})

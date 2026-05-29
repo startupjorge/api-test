@@ -1,0 +1,132 @@
+.share-bar
+  .share-bar-text
+    🔗 This page is ready to share with your customer
+    %span Copy the URL from your browser's address bar and send it directly
+  %button.btn.btn-copy{onclick: "copyPageUrl(this)"} Copy Link
+
+.page-header
+  %h1 Welcome to Your Gumshoe Data
+  %p.text-muted Here's everything you need to understand what the API returns — and how to pull it into your own tools
+
+.helper-box.helper-customer
+  %strong This page is for you.
+  It walks through the two main ways to explore your brand data, shows the exact API calls being made under the hood, and includes a live tester at the bottom so you can try it yourself right now.
+
+.how-to-doc{style: "max-width: 860px;"}
+
+  / ── Section 1: Rank Trends ──────────────────────────────────────────────
+  .doc-section{style: "background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;"}
+    %h2{style: "color: #2c3e50; margin-bottom: 1rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;"} 1. Rank Trends
+
+    %p{style: "margin-bottom: 1rem; line-height: 1.8;"}
+      The Rank Trends chart answers one question:
+      %strong How often is each brand showing up as the #1 answer — and is that changing over time?
+    %p{style: "margin-bottom: 1rem; line-height: 1.8;"}
+      For each report run, Gumshoe collects hundreds of AI-generated answers across different questions and models.
+      This chart calculates what percentage of those answers ranked your brand (or any competitor) in the top spot —
+      and plots it as a line so you can see the trend at a glance.
+
+    %h3{style: "margin: 1.25rem 0 0.5rem; color: #333;"} How it works under the hood
+
+    %p{style: "margin-bottom: 0.5rem; font-size: 0.9rem; color: #555;"} Step 1 — fetch all runs for the report:
+    %pre.code-block{style: "background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 1rem;"}
+      :preserve
+        GET /v1/reports/{reportId}/runs
+        Authorization: Bearer <token>
+
+    %p{style: "margin-bottom: 0.5rem; font-size: 0.9rem; color: #555;"} Step 2 — for each run, fetch the full answer data (done in parallel):
+    %pre.code-block{style: "background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 1rem;"}
+      :preserve
+        GET /v1/reports/{reportId}/runs/{ordinal}/raw
+        Authorization: Bearer <token>
+
+    %p{style: "margin-bottom: 0.5rem; font-size: 0.9rem; color: #555;"} The % ranked #1 is calculated per brand, per run:
+    %pre.code-block{style: "background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 1.5rem;"}
+      :preserve
+        answers_ranked_1 = answers.count { |a| a.mentions.any? { |m| m.rank == 1 && m.brand.key == brandKey } }
+        pct = (answers_ranked_1 / total_answers.to_f * 100).round(1)
+
+    %h3{style: "margin: 1.25rem 0 0.75rem; color: #333;"} Try it — open the Rank Trends chart
+    = form_with url: "#", method: :get, local: true do |f|
+      .form-row{style: "display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;"}
+        .form-group
+          = f.label :report_id, "Report ID", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :report_id, placeholder: "e.g. rpt_abc123", id: "trends_report_id", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 220px;"
+        %button.btn.btn-primary{type: "button", onclick: "goToTrends()"} View Trends Chart
+
+  / ── Section 2: Not Mentioned ─────────────────────────────────────────────
+  .doc-section{style: "background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;"}
+    %h2{style: "color: #2c3e50; margin-bottom: 1rem; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem;"} 2. Not Mentioned
+
+    %p{style: "margin-bottom: 1rem; line-height: 1.8;"}
+      %strong Not Mentioned shows you every conversation where your brand didn't appear at all.
+    %p{style: "margin-bottom: 1rem; line-height: 1.8;"}
+      These are the competitive gaps — questions where an AI answered in full without naming your brand once.
+      Browse through them to understand which topics or question types your brand is missing from,
+      and use them to inform your content and positioning strategy.
+
+    %h3{style: "margin: 1.25rem 0 0.5rem; color: #333;"} How it works under the hood
+
+    %p{style: "margin-bottom: 0.5rem; font-size: 0.9rem; color: #555;"} Fetches the raw answer set for a run:
+    %pre.code-block{style: "background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 0.75rem;"}
+      :preserve
+        GET /v1/reports/{reportId}/runs/{ordinal}/raw
+        Authorization: Bearer <token>
+
+    %p{style: "margin-bottom: 0.5rem; font-size: 0.9rem; color: #555;"} Then filters to answers where your brand key doesn't appear in any mention:
+    %pre.code-block{style: "background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 1.5rem;"}
+      :preserve
+        not_mentioned = answers.reject do |answer|
+          answer.mentions.any? { |m| m.brand.key == brandKey }
+        end
+
+    %h3{style: "margin: 1.25rem 0 0.75rem; color: #333;"} Try it — browse Not Mentioned conversations
+    = form_with url: "#", method: :get, local: true do |f|
+      .form-row{style: "display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;"}
+        .form-group
+          = f.label :nm_report_id, "Report ID", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :nm_report_id, placeholder: "e.g. rpt_abc123", id: "nm_report_id", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 180px;"
+        .form-group
+          = f.label :nm_ordinal, "Run Number", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :nm_ordinal, placeholder: "e.g. 1", id: "nm_ordinal", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 100px;"
+        .form-group
+          = f.label :nm_brand_key, "Brand Key", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :nm_brand_key, placeholder: "e.g. vector", id: "nm_brand_key", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 160px;"
+        %button.btn.btn-primary{type: "button", onclick: "goToNotMentioned()"} View Not Mentioned
+
+  / ── Section 3: Try It Live ───────────────────────────────────────────────
+  .doc-section{style: "background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;"}
+    %h2{style: "color: #2c3e50; margin-bottom: 1rem; border-bottom: 2px solid #fd7e14; padding-bottom: 0.5rem;"} 3. Live Data Tester
+
+    %p{style: "margin-bottom: 1.5rem; line-height: 1.8;"}
+      Want to see the numbers without clicking through pages? Enter a report ID, run number, and brand key
+      below and we'll fetch the data live and summarize it right here — how many answers we found,
+      how many ranked your brand #1, and how many didn't mention your brand at all.
+
+    = form_with url: how_to_try_it_live_path, method: :get, data: { turbo_frame: "try_it_result" } do |f|
+      .form-row{style: "display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem;"}
+        .form-group
+          = f.label :report_id, "Report ID", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :report_id, placeholder: "e.g. rpt_abc123", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;"
+        .form-group
+          = f.label :ordinal, "Run Number", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :ordinal, placeholder: "e.g. 1", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 100px;"
+        .form-group
+          = f.label :brand_key, "Brand Key", style: "display: block; font-weight: 600; margin-bottom: 0.25rem;"
+          = f.text_field :brand_key, placeholder: "e.g. vector", style: "padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-width: 160px;"
+        = f.submit "Fetch Live Data", class: "btn btn-primary"
+
+    = turbo_frame_tag "try_it_result" do
+      %p{style: "color: #888; font-style: italic;"} Your results will appear here — no page reload needed.
+
+:javascript
+  function goToTrends() {
+    const id = document.getElementById('trends_report_id').value.trim();
+    if (id) window.location = '/reports/' + encodeURIComponent(id) + '/trends';
+  }
+  function goToNotMentioned() {
+    const r = document.getElementById('nm_report_id').value.trim();
+    const o = document.getElementById('nm_ordinal').value.trim();
+    const b = document.getElementById('nm_brand_key').value.trim();
+    if (r && o) window.location = '/reports/' + encodeURIComponent(r) + '/runs/' + encodeURIComponent(o) + '/not_mentioned' + (b ? '?brand_key=' + encodeURIComponent(b) : '');
+  }

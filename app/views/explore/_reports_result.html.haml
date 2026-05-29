@@ -1,0 +1,32 @@
+- if @reports&.any?
+  %table.table
+    %thead
+      %tr
+        %th Report
+        %th Brand
+        %th Status
+        %th Created
+    %tbody
+      - @reports.each do |report|
+        - rid    = report['id']    || report[:id]
+        - title  = report['title'] || report[:title]
+        - brand  = report['brand'] || report[:brand]
+        - status = report['status'] || report[:status]
+        - cat    = report['createdAt'] || report[:created_at]
+        %tr
+          %td
+            = link_to report_path(rid), style: "text-decoration: none;" do
+              %strong{style: "color: #1a2332;"}= title || 'Untitled'
+              %div{style: "font-size: 0.78rem; color: #9ca3af; font-family: monospace; margin-top: 2px;"}= rid
+          %td= brand ? (brand['name'] || brand[:name] || '—') : '—'
+          %td
+            %span.status{class: status&.downcase}= status&.capitalize || '—'
+          %td.text-muted
+            - if cat
+              = Time.parse(cat).strftime("%b %d, %Y") rescue cat
+            - else
+              —
+- else
+  .card
+    .card-body
+      %p.text-muted No reports found.

@@ -1,29 +1,69 @@
+- ordinal = params[:ordinal] || params[:id]
+
+.btn-group.mb-2
+  = link_to "← Back to Report", report_path(@report_id), class: "btn btn-secondary"
+  = link_to "All Runs", report_runs_path(report_id: @report_id), class: "btn btn-secondary"
+
 - if @error
   .alert.alert-danger
     %strong Error:
     = @error
 - else
-  = link_to "← Back to Report Runs", report_runs_path(report_id: @report_id), class: "btn btn-secondary"
-  = link_to "View Raw", raw_report_run_path(report_id: @report_id, ordinal: params[:ordinal] || params[:id]), class: "btn btn-primary", style: "margin-left: 10px;"
-  %h1 Report Run Details (Report ##{@report_id}, Ordinal: #{params[:ordinal] || params[:id]})
-  
-  - if @curl_command
-    .debug-info{style: "background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 4px; font-family: monospace; font-size: 12px;"}
-      %strong CURL Command to test API:
-      %br
-      %code{style: "background: #fff; padding: 10px; display: block; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; word-break: break-all;"}
-        = @curl_command
-  
-  - if @report_run
-    .report-run-details
-      %dl
-        - @report_run.each do |key, value|
-          %dt= key.to_s.humanize
-          %dd
-            - if value.is_a?(Hash) || value.is_a?(Array)
-              %pre= JSON.pretty_generate(value)
-            - else
-              = value
-  - else
-    %p Report run not found.
+  .page-header
+    %h1 Run #{ordinal} — Report ##{@report_id}
 
+  .helper-box.helper-customer
+    %strong What can I share with the customer?
+    Use the green buttons below to jump directly to customer-facing pages. The amber panel contains the raw API response — for internal debugging only.
+
+  / Customer features for this run
+  .customer-actions
+    .ca-label
+      %strong Customer-Facing Features for This Run
+      %span Filter conversations or check the trends chart
+    .btn-group
+      = link_to "🔍 Not Mentioned", not_mentioned_report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-success", "data-tooltip" => "Customer-facing: browse conversations where a brand was completely absent from AI answers"
+      = link_to "📈 Trends Chart", trends_report_path(@report_id), class: "btn btn-success", "data-tooltip" => "Customer-facing: rank #1 trend chart across all runs for this report"
+
+  / Internal debug info
+  .panel.panel-internal
+    .panel-header{onclick: "togglePanel(this)"}
+      %span.badge.badge-internal Internal Testing
+      %h3
+        API Response
+        %em.info-icon{"data-tooltip" => "The raw JSON returned by GET /v1/reports/{id}/runs/{ordinal}. Expand to inspect all fields returned by the Gumshoe API."} i
+      %span.panel-toggle ▼
+    .panel-body.hidden
+      - if @curl_command
+        .debug-block
+          .debug-label curl command
+          %code= @curl_command
+      - if @report_run
+        .mt-2
+          .debug-block{style: "background: #1e293b;"}
+            .debug-label raw response
+          .report-run-details
+            %dl
+              - @report_run.each do |key, value|
+                %dt= key.to_s.humanize
+                %dd
+                  - if value.is_a?(Hash) || value.is_a?(Array)
+                    %pre= JSON.pretty_generate(value)
+                  - else
+                    = value
+
+  / Quick links
+  .panel
+    .card-header
+      %h3 Quick Actions
+    .card-body
+      .btn-group
+        = link_to "View Raw JSON", raw_report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-secondary", "data-tooltip" => "Internal: opens the full unprocessed JSON from GET /v1/reports/{id}/runs/{ordinal}/raw"
+
+:javascript
+  function togglePanel(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.panel-toggle');
+    body.classList.toggle('hidden');
+    toggle.classList.toggle('open');
+  }

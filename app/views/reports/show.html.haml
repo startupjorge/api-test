@@ -2,65 +2,117 @@
   .alert.alert-danger
     %strong Error:
     = @error
-- else
-  = link_to "← Back to Reports", reports_path, class: "btn btn-secondary"
-  %h1 Report Details
-  
-  - if @curl_command
-    .debug-info{style: "background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 4px; font-family: monospace; font-size: 12px;"}
-      %strong CURL Command to test API:
-      %br
-      %code{style: "background: #fff; padding: 10px; display: block; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; word-break: break-all;"}
-        = @curl_command
-  
-  - if @report
-    .report-details
-      %h2 Report Information
-      %dl
-        - @report.each do |key, value|
-          - next if key.to_s == 'runs' # Skip runs, we'll show them separately
-          %dt= key.to_s.humanize
-          %dd
-            - if value.is_a?(Hash) || value.is_a?(Array)
-              %pre= JSON.pretty_generate(value)
-            - else
-              = value
-    
-    - if @runs && @runs.any?
-      %h2 Report Runs (#{@runs.count})
-      %table.table
+- elsif @report
+  - report_id = params[:id]
+  - title = @report['title'] || @report[:title] || "Report #{report_id}"
+  - brand = @report['brand'] || @report[:brand]
+  - brand_name = brand ? (brand['name'] || brand[:name]) : nil
+  - brand_key = brand ? (brand['key'] || brand[:key]) : nil
+  - status = @report['status'] || @report[:status]
+  - latest_ordinal = @runs&.any? ? (@runs.map { |r| r['ordinal'] || r[:ordinal] }.compact.max || 1) : 1
+
+  .breadcrumb
+    = link_to "Reports", reports_path
+    %span.breadcrumb-sep /
+    %span= title
+
+  .page-header{style: "display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;"}
+    %div
+      %h1= title
+      %p.text-muted
+        - if brand_name
+          Brand: #{brand_name}
+          ·
+        - if status
+          %span.status{class: status&.downcase}= status&.capitalize
+        - if @runs&.any?
+          · #{@runs.count} #{"run".pluralize(@runs.count)}
+        · ID:
+        %code{style: "font-size: 0.8rem;"}= report_id
+
+  / ── Feature cards ──────────────────────────────────────
+  .feature-grid
+    .feature-card
+      .feature-card-icon 📈
+      %h3 Rank Trends
+      %p How often each brand appears as the #1 AI answer — plotted across every run so you can see momentum and changes over time.
+      .feature-card-actions
+        = link_to "View Chart", trends_report_path(report_id), class: "btn btn-primary btn-sm"
+        = link_to "Share →", customer_trends_report_path(report_id), class: "btn btn-outline btn-sm"
+    .feature-card
+      .feature-card-icon 🔍
+      %h3 Not Mentioned
+      %p Every AI conversation where a specific brand was completely absent — your competitive gap finder.
+      .feature-card-actions
+        - if brand_key.present?
+          = link_to "Browse", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
+          = link_to "Share →", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-outline btn-sm"
+        - else
+          = link_to "Browse", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
+          = link_to "Share →", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-outline btn-sm"
+
+  / ── Runs ────────────────────────────────────────────────
+  - if @runs && @runs.any?
+    .panel
+      .card-header
+        %h3 Runs
+        %span.text-muted{style: "font-size: 0.8rem;"} #{@runs.count} total
+      %table.table{style: "border-radius: 0; box-shadow: none;"}
         %thead
           %tr
-            %th ID
-            %th Ordinal
-            %th Status
-            %th Created At
-            %th Actions
+            %th Run
+            %th Date
+            %th{style: "text-align: right;"} Actions
         %tbody
           - @runs.each do |run|
+            - ordinal = run['ordinal'] || run[:ordinal]
+            - created_at = run['createdAt'] || run['created_at'] || run[:created_at]
             %tr
-              %td= run['id'] || run[:id] || 'N/A'
-              %td= run['ordinal'] || run[:ordinal] || 'N/A'
               %td
-                - status = run['status'] || run[:status]
-                %span.status{class: status&.downcase}
-                  = status&.capitalize || 'N/A'
-              %td
-                - created_at = run['createdAt'] || run['created_at'] || run[:created_at]
+                %strong Run #{ordinal}
+              %td.text-muted
                 - if created_at
-                  = Time.parse(created_at).strftime("%Y-%m-%d %H:%M") rescue created_at
+                  = Time.parse(created_at).strftime("%b %d, %Y") rescue created_at
                 - else
-                  N/A
-              %td
-                - ordinal = run['ordinal'] || run[:ordinal]
-                - report_id = params[:id]
-                - if ordinal && report_id
-                  = link_to "View", report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-primary"
-                  = link_to "Raw", raw_report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-secondary", style: "margin-left: 5px;"
-                - else
-                  N/A
-    - else
-      %p No runs found for this report.
+                  —
+              %td{style: "text-align: right;"}
+                .btn-group{style: "justify-content: flex-end;"}
+                  = link_to "View", report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-secondary btn-sm"
+                  - if brand_key.present?
+                    = link_to "Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal, brand_key: brand_key), class: "btn btn-outline btn-sm"
+                  - else
+                    = link_to "Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-outline btn-sm"
   - else
-    %p Report not found.
+    .card
+      .card-body
+        %p.text-muted No runs found for this report.
 
+  / ── Internal debug ──────────────────────────────────────
+  .panel.panel-internal{style: "margin-top: 1rem;"}
+    .panel-header{onclick: "togglePanel(this)"}
+      %span.badge.badge-internal Internal
+      %h3 API Debug
+      %span.panel-toggle ▼
+    .panel-body.hidden
+      - if @curl_command
+        .debug-block
+          .debug-label curl command
+          %code= @curl_command
+      .report-details.mt-2
+        %dl
+          - @report.each do |key, value|
+            - next if key.to_s == 'runs'
+            %dt= key.to_s.humanize
+            %dd
+              - if value.is_a?(Hash) || value.is_a?(Array)
+                %pre= JSON.pretty_generate(value)
+              - else
+                = value
+
+:javascript
+  function togglePanel(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.panel-toggle');
+    body.classList.toggle('hidden');
+    toggle.classList.toggle('open');
+  }

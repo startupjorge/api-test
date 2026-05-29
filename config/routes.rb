@@ -13,10 +13,28 @@ Rails.application.routes.draw do
   root "reports#index"
 
   resources :reports, only: [ :index, :show ] do
+    member do
+      get :trends
+      get :customer_trends
+    end
     resources :runs, only: [ :index, :show ], controller: "report_runs", param: :ordinal do
       member do
         get "raw"
+        get "not_mentioned"
+        get "customer_not_mentioned"
       end
     end
+  end
+
+  get "explore",           to: redirect("/explore/internal")
+  get "explore/internal",  to: "explore#internal",  as: :explore_internal
+  get "explore/customer",  to: "explore#customer",  as: :explore_customer
+
+  get "how_to", to: "how_to#index"
+  get "how_to/customer", to: "how_to#customer", as: :how_to_customer
+  get "how_to/try_it_live", to: "how_to#try_it_live"
+
+  resource :settings, only: [:show, :update] do
+    get :customer
   end
 end

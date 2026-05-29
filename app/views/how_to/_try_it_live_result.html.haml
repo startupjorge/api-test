@@ -1,0 +1,18 @@
+= turbo_frame_tag "try_it_result" do
+  - if @error
+    .alert.alert-danger= @error
+  - elsif @results
+    .try-it-results{style: "background: #f8f9fa; border-radius: 4px; padding: 1.5rem; border: 1px solid #dee2e6;"}
+      %h4{style: "margin-bottom: 1rem; color: #2c3e50;"} Results for "#{@brand_key}" in Run #{@ordinal}
+      .stats-grid{style: "display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem;"}
+        .stat-card{style: "background: white; padding: 1rem; border-radius: 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"}
+          .stat-number{style: "font-size: 2rem; font-weight: bold; color: #2c3e50;"}= @results[:total]
+          .stat-label{style: "font-size: 0.85rem; color: #666;"} Total Answers
+        .stat-card{style: "background: white; padding: 1rem; border-radius: 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"}
+          .stat-number{style: "font-size: 2rem; font-weight: bold; color: #28a745;"}= @results[:ranked_first]
+          .stat-label{style: "font-size: 0.85rem; color: #666;"} Ranked #1
+        .stat-card{style: "background: white; padding: 1rem; border-radius: 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"}
+          .stat-number{style: "font-size: 2rem; font-weight: bold; color: #dc3545;"}= @results[:not_mentioned]
+          .stat-label{style: "font-size: 0.85rem; color: #666;"} Not Mentioned
+  - else
+    %p{style: "color: #888; font-style: italic;"} Enter a report ID, run ordinal, and brand key above, then click Fetch.

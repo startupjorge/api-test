@@ -7,42 +7,12 @@ class ReportRunsController < ApplicationController
     @curl_command = curl_command(report_runs_url(@report_id))
 
     begin
-      # Check if credentials are available - wrap in rescue in case master key is missing
-      credentials = nil
-      begin
-        credentials = Rails.application.credentials
-      rescue => cred_error
-        @error = "Cannot access credentials: #{cred_error.message}. Check config/master.key exists."
-        @report_runs = []
-        Rails.logger.error @error
-        Rails.logger.error "Credentials error: #{cred_error.class} - #{cred_error.message}"
-        return
-      end
-
-      if credentials.nil?
-        @error = "Credentials not available. Check config/master.key and config/credentials.yml.enc"
-        @report_runs = []
-        Rails.logger.error @error
-        return
-      end
-
-      gumshoe_creds = credentials.gumshoe
-      if gumshoe_creds.nil?
-        @error = "Gumshoe credentials not found in credentials file. Run: EDITOR='nano' bin/rails credentials:edit"
-        @report_runs = []
-        Rails.logger.error @error
-        return
-      end
-
-      api_key = gumshoe_creds[:api_key]
+      api_key = current_api_key
       if api_key.blank?
-        @error = "API key is blank. Check credentials file."
+        @error = "No API key set. Please add your API key in Settings."
         @report_runs = []
-        Rails.logger.error @error
         return
       end
-
-      @curl_command = curl_command(report_runs_url(@report_id))
 
       client = GumshoeClient.new(api_key)
       response = client.report_runs(@report_id, gumshoe_pagination_params)
@@ -51,7 +21,6 @@ class ReportRunsController < ApplicationController
       if response.success?
         parsed = response.parsed_response
         set_gumshoe_pagination(parsed)
-        # Handle nested structure: {"data": [...]}, {"runs": [...]} or direct array
         @report_runs = if parsed.is_a?(Hash) && parsed["data"]
           parsed["data"]
         elsif parsed.is_a?(Hash) && parsed[:data]
@@ -68,22 +37,17 @@ class ReportRunsController < ApplicationController
       else
         @report_runs = []
         @error = "Failed to fetch report runs: HTTP #{response.code} - #{response.message}"
-        Rails.logger.error @error
-        Rails.logger.error "Response body: #{response.body}"
       end
     rescue => e
       @report_runs = []
       @error = "Error fetching report runs: #{e.class} - #{e.message}"
-      Rails.logger.error "Exception: #{e.class} - #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      # @curl_command is already set at the top of the method, so it will always be available
+      Rails.logger.error "Exception: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
     end
   end
 
   def show
     begin
-      api_key = Rails.application.credentials.gumshoe[:api_key]
-      client = GumshoeClient.new(api_key)
+      client = GumshoeClient.new(current_api_key)
       ordinal = params[:ordinal] || params[:id]
       response = client.report_run(@report_id, ordinal)
       @curl_command = client.curl_command
@@ -92,40 +56,37 @@ class ReportRunsController < ApplicationController
         @report_run = response.parsed_response
       else
         @error = "Failed to fetch report run: HTTP #{response.code} - #{response.message}"
-        Rails.logger.error @error
-        Rails.logger.error "Response body: #{response.body}"
         redirect_to report_runs_path(report_id: @report_id), alert: @error
       end
     rescue => e
       @error = "Error fetching report run: #{e.message}"
-      Rails.logger.error "Exception: #{e.class} - #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
       redirect_to report_runs_path(report_id: @report_id), alert: @error
     end
   end
 
+  def not_mentioned
+    build_not_mentioned_data
+  end
+
+  def customer_not_mentioned
+    build_not_mentioned_data
+  end
+
   def raw
     begin
-      api_key = Rails.application.credentials.gumshoe[:api_key]
-      client = GumshoeClient.new(api_key)
+      client = GumshoeClient.new(current_api_key)
       ordinal = params[:ordinal] || params[:id]
       response = client.report_run_raw(@report_id, ordinal)
       @curl_command = client.curl_command
 
       if response.success?
-        @raw_data = response.body
-        render plain: @raw_data, content_type: "application/json"
+        render plain: response.body, content_type: "application/json"
       else
         @error = "Failed to fetch raw report run: HTTP #{response.code} - #{response.message}"
-        Rails.logger.error @error
-        Rails.logger.error "Response body: #{response.body}"
         redirect_to report_run_path(report_id: @report_id, ordinal: ordinal), alert: @error
       end
     rescue => e
-      @error = "Error fetching raw report run: #{e.message}"
-      Rails.logger.error "Exception: #{e.class} - #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      redirect_to report_run_path(report_id: @report_id, ordinal: ordinal), alert: @error
+      redirect_to report_run_path(report_id: @report_id, ordinal: params[:ordinal] || params[:id]), alert: e.message
     end
   end
 
@@ -133,5 +94,48 @@ class ReportRunsController < ApplicationController
 
   def set_report_id
     @report_id = params[:report_id]
+  end
+
+  def build_not_mentioned_data
+    @ordinal = params[:ordinal] || params[:id]
+    @brand_key = params[:brand_key].to_s.strip
+
+    begin
+      client = GumshoeClient.new(current_api_key)
+      raw = client.get_raw(@report_id, @ordinal)
+
+      all_answers = []
+      (raw["personas"] || []).each do |persona|
+        persona_name = persona["name"] || persona[:name] || "Unknown Persona"
+        (persona["questions"] || []).each do |question|
+          q_text = question["text"] || question[:text] || ""
+          q_model = question["model"] || question[:model] || ""
+          (question["answers"] || []).each do |answer|
+            all_answers << {
+              persona_name: persona_name,
+              question_text: q_text,
+              model: q_model,
+              answer_text: answer["text"] || answer[:text] || "",
+              citations: answer["citations"] || answer[:citations] || [],
+              mentions: answer["mentions"] || answer[:mentions] || []
+            }
+          end
+        end
+      end
+
+      @total_answers = all_answers.size
+      @not_mentioned = if @brand_key.present?
+        all_answers.reject do |a|
+          a[:mentions].any? { |m| (m["brand"] || m[:brand] || {}).values_at("key", :key).compact.any? { |k| k == @brand_key } }
+        end
+      else
+        []
+      end
+    rescue => e
+      @error = "Error fetching data: #{e.message}"
+      Rails.logger.error "#{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+      @not_mentioned = []
+      @total_answers = 0
+    end
   end
 end

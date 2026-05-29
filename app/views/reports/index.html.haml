@@ -1,86 +1,74 @@
-%h1 Reports
+.page-header{style: "display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;"}
+  %div
+    %h1 Reports
+    %p.text-muted Your Gumshoe reports — click any report to explore its data
 
 - if @error
   .alert.alert-danger
     %strong Error:
     = @error
-    %br
-    %br
-    - if @error.include?("Credentials not available") || @error.include?("Gumshoe credentials not found")
-      %strong To fix this:
-      %br
-      1. Provide the Rails master key via
-      %code RAILS_MASTER_KEY
-      or a local
-      %code config/master.key
-      file.
-      %br
-      2. Or edit credentials:
-      %code EDITOR='nano' bin/rails credentials:edit
-      %br
-      %br
-    %small Check the Rails logs for detailed API request/response information
-
-- if @curl_command
-  .debug-info{style: "background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 4px; font-family: monospace; font-size: 12px;"}
-    %strong CURL Command to test API:
-    %br
-    %code{style: "background: #fff; padding: 10px; display: block; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; word-break: break-all;"}
-      = @curl_command
 
 - if @reports && @reports.any?
   %table.table
     %thead
       %tr
-        %th ID
-        %th Title
+        %th Report
         %th Brand
         %th Status
-        %th Organization
-        %th Geo
-        %th Created At
-        %th Actions
+        %th Created
+        %th{style: "text-align: right;"} Actions
     %tbody
       - @reports.each do |report|
+        - report_id = report['id'] || report[:id]
+        - title = report['title'] || report[:title]
+        - brand = report['brand'] || report[:brand]
+        - status = report['status'] || report[:status]
+        - created_at = report['createdAt'] || report[:created_at]
         %tr
-          %td= report['id'] || report[:id] || 'N/A'
           %td
-            - title = report['title'] || report[:title]
-            = title || 'N/A'
+            = link_to report_path(report_id), style: "text-decoration: none;" do
+              %strong{style: "color: #1a2332;"}= title || 'Untitled'
+              %div{style: "font-size: 0.78rem; color: #9ca3af; font-family: monospace; margin-top: 2px;"}= report_id
+          %td= brand ? (brand['name'] || brand[:name] || '—') : '—'
           %td
-            - brand = report['brand'] || report[:brand]
-            - if brand
-              = brand['name'] || brand[:name] || 'N/A'
-            - else
-              N/A
-          %td
-            - status = report['status'] || report[:status]
-            %span.status{class: status&.downcase}
-              = status&.capitalize || 'N/A'
-          %td
-            - org = report['organization'] || report[:organization]
-            - if org
-              = org['title'] || org[:title] || 'N/A'
-            - else
-              N/A
-          %td= report['geo'] || report[:geo] || 'N/A'
-          %td
-            - created_at = report['createdAt'] || report[:created_at]
+            %span.status{class: status&.downcase}= status&.capitalize || '—'
+          %td.text-muted
             - if created_at
-              = Time.parse(created_at).strftime("%Y-%m-%d %H:%M") rescue created_at
+              = Time.parse(created_at).strftime("%b %d, %Y") rescue created_at
             - else
-              N/A
-          %td
-            - report_id = report['id'] || report[:id]
-            - if report_id
-              = link_to "View", report_path(report_id), class: "btn btn-primary"
-            - else
-              N/A
+              —
+          %td{style: "text-align: right;"}
+            .btn-group{style: "justify-content: flex-end;"}
+              - if report_id
+                = link_to "Open →", report_path(report_id), class: "btn btn-primary btn-sm"
+                = link_to "📈 Trends", customer_trends_report_path(report_id), class: "btn btn-outline btn-sm"
+
   - if @prev_token || @next_token
-    .pagination{style: "margin-top: 20px;"}
+    .pagination
       - if @prev_token
-        = link_to "Previous", reports_path(request.query_parameters.merge(token: @prev_token)), class: "btn btn-secondary"
+        = link_to "← Previous", reports_path(request.query_parameters.merge(token: @prev_token)), class: "btn btn-secondary"
       - if @next_token
-        = link_to "Next", reports_path(request.query_parameters.merge(token: @next_token)), class: "btn btn-secondary", style: "margin-left: 5px;"
+        = link_to "Next →", reports_path(request.query_parameters.merge(token: @next_token)), class: "btn btn-secondary"
 - else
-  %p No reports found.
+  .card
+    .card-body
+      %p.text-muted No reports found.
+
+.panel.panel-internal{style: "margin-top: 1.5rem;"}
+  .panel-header{onclick: "togglePanel(this)"}
+    %span.badge.badge-internal Internal
+    %h3 API Debug
+    %span.panel-toggle ▼
+  .panel-body.hidden
+    - if @curl_command
+      .debug-block
+        .debug-label curl command
+        %code= @curl_command
+
+:javascript
+  function togglePanel(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.panel-toggle');
+    body.classList.toggle('hidden');
+    toggle.classList.toggle('open');
+  }

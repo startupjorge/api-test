@@ -1,0 +1,49 @@
+- content_for :head do
+  %script{src: "https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"}
+
+- if @chart_datasets.blank?
+  .alert.alert-danger No run data found for report #{@report_id}.
+- else
+  .chart-container{style: "position: relative; width: 100%; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"}
+    %p{style: "color: #666; margin-bottom: 1rem; font-size: 0.875rem;"} % of answers where each brand was ranked #1 across all runs for report #{@report_id}
+    %canvas#exploreChart{style: "width: 100%; height: 380px;"}
+
+  :javascript
+    (function() {
+      const rawLabels = #{@chart_labels.to_json};
+      const labels = rawLabels.map(l => {
+        const d = new Date(l);
+        return isNaN(d) ? l : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      });
+      const palette = ['#007bff','#28a745','#dc3545','#fd7e14','#6f42c1','#20c997','#e83e8c','#17a2b8','#ffc107','#6c757d'];
+      const allDatasets = #{@chart_datasets.to_json};
+      const scored = allDatasets.map(ds => ({ ...ds, peak: Math.max(...ds.data) })).sort((a,b) => b.peak - a.peak);
+      const datasets = [
+        ...scored.slice(0,10).map((ds,i) => ({
+          label: ds.label, data: ds.data,
+          borderColor: palette[i % palette.length],
+          backgroundColor: palette[i % palette.length] + '22',
+          tension: 0.3, pointRadius: 4, fill: false, hidden: false
+        })),
+        ...scored.slice(10).map(ds => ({
+          label: ds.label, data: ds.data,
+          borderColor: '#ccc', backgroundColor: '#cccccc22',
+          tension: 0.3, pointRadius: 2, fill: false, hidden: true
+        }))
+      ];
+      new Chart(document.getElementById('exploreChart'), {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { filter: item => !item.hidden, boxWidth: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+          },
+          scales: {
+            y: { min: 0, max: 100, title: { display: true, text: '% Ranked #1' }, ticks: { callback: v => v + '%' } },
+            x: { title: { display: true, text: 'Run Date' } }
+          }
+        }
+      });
+    })();

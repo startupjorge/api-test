@@ -1,75 +1,92 @@
-= link_to "← Back to Report", report_path(@report_id), class: "btn btn-secondary"
-%h1 Report Runs for Report ##{@report_id}
+= link_to "← Back to Report", report_path(@report_id), class: "btn btn-secondary mb-2"
+
+.page-header
+  %h1 Runs — Report ##{@report_id}
 
 - if @error
   .alert.alert-danger
     %strong Error:
     = @error
-    %br
-    %br
-    - if @error.include?("Credentials not available") || @error.include?("Gumshoe credentials not found")
-      %strong To fix this:
-      %br
-      1. Provide the Rails master key via
-      %code RAILS_MASTER_KEY
-      or a local
-      %code config/master.key
-      file.
-      %br
-      2. Or edit credentials:
-      %code EDITOR='nano' bin/rails credentials:edit
-      %br
-      %br
-    %small Check the Rails logs for detailed API request/response information
 
-- if @curl_command
-  .debug-info{style: "background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 4px; font-family: monospace; font-size: 12px;"}
-    %strong CURL Command to test API:
-    %br
-    %code{style: "background: #fff; padding: 10px; display: block; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; word-break: break-all;"}
-      = @curl_command
+.helper-box.helper-internal
+  %strong What is this page?
+  A list of every run for this report. Each run is one full batch of AI conversations sent to the models. Use
+  %strong View
+  or
+  %strong Raw JSON
+  for internal debugging, or
+  %strong Not Mentioned
+  to pull up the customer-facing conversation filter.
+
+.panel.panel-internal
+  .panel-header{onclick: "togglePanel(this)"}
+    %span.badge.badge-internal Internal Testing
+    %h3
+      API Request
+      %em.info-icon{"data-tooltip" => "The curl command used to fetch this runs list from GET /v1/reports/{id}/runs"} i
+    %span.panel-toggle ▼
+  .panel-body.hidden
+    - if @curl_command
+      .debug-block
+        .debug-label curl command
+        %code= @curl_command
 
 - if @report_runs && @report_runs.any?
   %table.table
     %thead
       %tr
-        %th Ordinal
-        %th Status
+        %th
+          Run #
+          %em.info-icon{"data-tooltip" => "The run ordinal — used in API calls like GET /v1/reports/{id}/runs/{ordinal}/raw"} i
         %th Created At
         %th Updated At
-        %th Actions
+        %th
+          Internal Tools
+          %em.info-icon{"data-tooltip" => "View = parsed detail page. Raw JSON = unprocessed API response. Internal debugging only."} i
+        %th
+          Customer Features
+          %em.info-icon{"data-tooltip" => "Not Mentioned = conversations where the brand was completely absent. Safe to share with customers."} i
     %tbody
-      - @report_runs.each do |report_run|
+      - @report_runs.each do |run|
+        - ordinal = run['ordinal'] || run[:ordinal] || run['id'] || run[:id]
+        - created_at = run['createdAt'] || run['created_at'] || run[:created_at]
+        - updated_at = run['updatedAt'] || run['updated_at'] || run[:updated_at]
         %tr
-          %td= report_run['ordinal'] || report_run[:ordinal] || report_run['id'] || report_run[:id]
           %td
-            - status = report_run['status'] || report_run[:status]
-            %span.status{class: status&.downcase}
-              = status&.capitalize || 'N/A'
-          %td
-            - created_at = report_run['createdAt'] || report_run['created_at'] || report_run[:created_at]
+            %strong Run #{ordinal}
+          %td.text-muted
             - if created_at
-              = Time.parse(created_at).strftime("%Y-%m-%d %H:%M") rescue created_at
+              = Time.parse(created_at).strftime("%b %d, %Y %H:%M") rescue created_at
             - else
               N/A
-          %td
-            - updated_at = report_run['updatedAt'] || report_run['updated_at'] || report_run[:updated_at]
+          %td.text-muted
             - if updated_at
-              = Time.parse(updated_at).strftime("%Y-%m-%d %H:%M") rescue updated_at
+              = Time.parse(updated_at).strftime("%b %d, %Y %H:%M") rescue updated_at
             - else
               N/A
           %td
-            - ordinal = report_run['ordinal'] || report_run[:ordinal] || report_run['id'] || report_run[:id]
-            - if ordinal && @report_id
-              = link_to "View", report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-primary"
-              = link_to "Raw", raw_report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-secondary", style: "margin-left: 5px;"
-            - else
-              N/A
+            .btn-group
+              = link_to "View", report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-secondary btn-sm", "data-tooltip" => "Internal: parsed run detail and debug info"
+              = link_to "Raw JSON", raw_report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-secondary btn-sm", "data-tooltip" => "Internal: full unprocessed JSON from the Gumshoe API"
+          %td
+            .btn-group
+              = link_to "Not Mentioned", not_mentioned_report_run_path(report_id: @report_id, ordinal: ordinal), class: "btn btn-success btn-sm", "data-tooltip" => "Customer-facing: filter conversations where a brand was completely absent"
+
   - if @prev_token || @next_token
-    .pagination{style: "margin-top: 20px;"}
+    .pagination
       - if @prev_token
-        = link_to "Previous", report_runs_path(report_id: @report_id, **request.query_parameters.merge(token: @prev_token).symbolize_keys), class: "btn btn-secondary"
+        = link_to "← Previous", report_runs_path(report_id: @report_id, **request.query_parameters.merge(token: @prev_token).symbolize_keys), class: "btn btn-secondary"
       - if @next_token
-        = link_to "Next", report_runs_path(report_id: @report_id, **request.query_parameters.merge(token: @next_token).symbolize_keys), class: "btn btn-secondary", style: "margin-left: 5px;"
+        = link_to "Next →", report_runs_path(report_id: @report_id, **request.query_parameters.merge(token: @next_token).symbolize_keys), class: "btn btn-secondary"
 - else
-  %p No report runs found.
+  .card
+    .card-body
+      %p.text-muted No runs found.
+
+:javascript
+  function togglePanel(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.panel-toggle');
+    body.classList.toggle('hidden');
+    toggle.classList.toggle('open');
+  }

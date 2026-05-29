@@ -1,0 +1,38 @@
+.stats-row
+  .stat-card
+    .stat-number{style: "color: #1a2332;"}= @total_answers
+    .stat-label Total Answers
+  .stat-card
+    .stat-number{style: "color: #dc2626;"}= @not_mentioned.size
+    .stat-label Not Mentioned
+  .stat-card
+    .stat-number{style: "color: #059669;"}= @total_answers - @not_mentioned.size
+    .stat-label Was Mentioned
+
+%p{style: "margin-bottom: 1.25rem; font-size: 0.95rem; color: #374151;"}
+  %strong= "#{@not_mentioned.size} conversations"
+  where
+  %strong= "\"#{@brand_key}\""
+  was not mentioned, out of #{@total_answers} total in report #{@report_id} run #{@ordinal}.
+
+- if @not_mentioned.any?
+  - @not_mentioned.each do |answer|
+    .answer-card
+      .meta
+        %span
+          %strong Persona:
+          = answer[:persona_name]
+        %span
+          %strong Model:
+          = answer[:model].presence || "—"
+      .question= answer[:question_text]
+      .answer-text= answer[:answer_text]
+      - if answer[:citations].any?
+        %hr.divider
+        %p{style: "font-size: 0.78rem; color: #9ca3af;"}
+          %strong Citations:
+          = answer[:citations].map { |c| c["url"] || c[:url] || c.to_s }.join(" · ")
+- else
+  .card
+    .card-body
+      %p.text-muted "#{@brand_key}" appeared in every conversation in this run.

@@ -49,3 +49,7 @@
 # Ignore setup script
 /setup_credentials.rb
 
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+
