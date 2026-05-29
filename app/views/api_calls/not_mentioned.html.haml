@@ -34,9 +34,7 @@
     %h3 Run it directly with curl
   .card-body
     %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Fetch raw run data
-    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"}
-      curl -H "Authorization: Bearer YOUR_API_KEY" \
-      #{" "}https://api.gumshoe.ai/reports/22110/runs/1/raw
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"} curl -H "Authorization: Bearer YOUR_API_KEY" https://api.gumshoe.ai/reports/22110/runs/1/raw
     %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Filter not-mentioned answers
     %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap;"}
       # For each answer in personas[].questions[].answers[]

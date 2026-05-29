@@ -36,13 +36,9 @@
     %h3 Run it directly with curl
   .card-body
     %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Step 1 — fetch runs
-    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"}
-      curl -H "Authorization: Bearer YOUR_API_KEY" \
-      #{" "}https://api.gumshoe.ai/reports/22110/runs
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"} curl -H "Authorization: Bearer YOUR_API_KEY" https://api.gumshoe.ai/reports/22110/runs
     %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Step 2 — fetch raw data for run 1
-    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"}
-      curl -H "Authorization: Bearer YOUR_API_KEY" \
-      #{" "}https://api.gumshoe.ai/reports/22110/runs/1/raw
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"} curl -H "Authorization: Bearer YOUR_API_KEY" https://api.gumshoe.ai/reports/22110/runs/1/raw
     %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Step 3 — compute % ranked #1
     %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap;"}
       # For each answer, check mentions where rank == 1
