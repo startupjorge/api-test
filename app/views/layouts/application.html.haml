@@ -23,14 +23,12 @@
           - if logged_in?
             .nav-internal
               = link_to "Reports", reports_path, class: "nav-link"
-              %span.nav-sep |
               = link_to "API Key", settings_path, class: "nav-link"
               - if employee?
-                %span.nav-sep |
                 = link_to "Invite", invite_index_path, class: "nav-link"
           - if logged_in?
             .nav-divider
-            = link_to "API Docs", "https://app.gumshoe.ai/openapi", class: "nav-link nav-link-docs", target: "_blank"
+            = link_to "API Docs", "https://app.gumshoe.ai/openapi", class: "nav-link", target: "_blank"
             .nav-divider
             - if current_user_email.present?
               %span.nav-employee= current_user_email.split('@').first.capitalize
