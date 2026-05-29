@@ -6,7 +6,7 @@ Rails.application.routes.draw do
   get    "logout", to: "sessions#goodbye", as: :logout_page
   delete "logout", to: "sessions#destroy", as: :logout
 
-  root "explore#internal"
+  root "reports#index"
 
   resources :reports, only: [ :index, :show ] do
     member do

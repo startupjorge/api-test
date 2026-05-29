@@ -1,21 +1,9 @@
-.admin-flow-bar
-  .flow-step.flow-step-done= link_to "1 · API Key", settings_path
-  .flow-step-arrow →
-  .flow-step.flow-step-done= link_to "2 · Test", root_path
-  .flow-step-arrow →
-  .flow-step.flow-step-active 3 · Reports
-  .flow-step-arrow →
-  .flow-step= link_to "4 · Share", invite_index_path
-
-.page-header{style: "display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;"}
-  %div
-    %h1 Reports
-    %p.text-muted Click a report to see API results and share them with your customer
+.page-header
+  %h1 Reports
+  %p.text-muted Select a report to run queries and see results
 
 - if @error
-  .alert.alert-danger
-    %strong Error:
-    = @error
+  .alert.alert-danger= @error
 
 - if @reports && @reports.any?
   %table.table
@@ -25,7 +13,6 @@
         %th Brand
         %th Status
         %th Created
-        %th{style: "text-align: right;"} Actions
     %tbody
       - @reports.each do |report|
         - report_id = report['id'] || report[:id]
@@ -33,11 +20,10 @@
         - brand = report['brand'] || report[:brand]
         - status = report['status'] || report[:status]
         - created_at = report['createdAt'] || report[:created_at]
-        %tr
+        %tr{style: "cursor: pointer;", onclick: "window.location='#{report_path(report_id)}'"}
           %td
-            = link_to report_path(report_id), style: "text-decoration: none;" do
-              %strong{style: "color: #1a2332;"}= title || 'Untitled'
-              %div{style: "font-size: 0.78rem; color: #9ca3af; font-family: monospace; margin-top: 2px;"}= report_id
+            %strong= title || 'Untitled'
+            %div{style: "font-size: 0.78rem; color: #9ca3af; font-family: monospace; margin-top: 2px;"}= report_id
           %td= brand ? (brand['name'] || brand[:name] || '—') : '—'
           %td
             %span.status{class: status&.downcase}= status&.capitalize || '—'
@@ -46,8 +32,6 @@
               = Time.parse(created_at).strftime("%b %d, %Y") rescue created_at
             - else
               —
-          %td{style: "text-align: right;"}
-            = link_to "View Results →", report_path(report_id), class: "btn btn-primary btn-sm"
 
   - if @prev_token || @next_token
     .pagination

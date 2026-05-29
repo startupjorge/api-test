@@ -39,40 +39,32 @@ class ReportsController < ApplicationController
   end
 
   def show
-    begin
-      client = GumshoeClient.new(current_api_key)
-      response = client.report(params[:id])
-      @curl_command = client.curl_command
+    client = GumshoeClient.new(current_api_key)
+    response = client.report(params[:id])
 
-      if response.success?
-        parsed = response.parsed_response
-        @report = if parsed.is_a?(Hash) && parsed["data"]
-          parsed["data"]
-        elsif parsed.is_a?(Hash) && parsed[:data]
-          parsed[:data]
-        elsif parsed.is_a?(Hash) && parsed["report"]
-          parsed["report"]
-        elsif parsed.is_a?(Hash) && parsed[:report]
-          parsed[:report]
-        else
-          parsed
-        end
-        @runs = @report.is_a?(Hash) ? (@report["runs"] || @report[:runs] || []) : []
-        latest_run = @runs.max_by { |r| (r["ordinal"] || r[:ordinal] || 0).to_i }
-        if latest_run
-          latest_ordinal = latest_run["ordinal"] || latest_run[:ordinal]
-          @latest_stats = compute_run_stats(client, params[:id], latest_ordinal)
-          @latest_ordinal = latest_ordinal
-        end
-        build_trends_data
-      else
-        @error = "Failed to fetch report: HTTP #{response.code} - #{response.message}"
-        redirect_to reports_path, alert: @error
-      end
-    rescue => e
-      @error = "Error fetching report: #{e.message}"
-      redirect_to reports_path, alert: @error
+    unless response.success?
+      redirect_to reports_path, alert: "Failed to load report." and return
     end
+
+    parsed = response.parsed_response
+    @report = parsed.is_a?(Hash) ? (parsed["data"] || parsed["report"] || parsed) : parsed
+    @report_id = params[:id]
+    brand = @report.is_a?(Hash) ? (@report["brand"] || @report[:brand] || {}) : {}
+    @brand_key = brand["key"] || brand[:key]
+    @brand_name = brand["name"] || brand[:name]
+
+    @query_type = params[:query_type]
+
+    case @query_type
+    when "trends"
+      build_trends_data
+    when "not_mentioned"
+      @brand_key = params[:brand_key].presence || @brand_key
+      @ordinal   = params[:ordinal].presence || "1"
+      build_not_mentioned_data(client)
+    end
+  rescue => e
+    redirect_to reports_path, alert: e.message
   end
 
   def trends
@@ -81,6 +73,38 @@ class ReportsController < ApplicationController
 
 
   private
+
+  def build_not_mentioned_data(client)
+    raw = client.get_raw(@report_id, @ordinal)
+    all_answers = []
+
+    (raw["personas"] || []).each do |persona|
+      persona_name = persona["name"] || "Unknown Persona"
+      (persona["questions"] || []).each do |question|
+        q_text  = question["text"]  || ""
+        q_model = question["model"] || ""
+        (question["answers"] || []).each do |answer|
+          all_answers << {
+            persona_name: persona_name,
+            question_text: q_text,
+            model: q_model,
+            answer_text: answer["text"] || "",
+            citations: answer["citations"] || [],
+            mentions:  answer["mentions"]  || []
+          }
+        end
+      end
+    end
+
+    @total_answers = all_answers.size
+    @not_mentioned = all_answers.reject do |a|
+      a[:mentions].any? { |m| (m["brand"] || m[:brand] || {}).values_at("key", :key).compact.any? { |k| k == @brand_key } }
+    end
+  rescue => e
+    @error = "Error loading data: #{e.message}"
+    @not_mentioned = []
+    @total_answers  = 0
+  end
 
   def compute_run_stats(client, report_id, ordinal)
     raw = client.get_raw(report_id, ordinal)

@@ -1,145 +1,144 @@
 - content_for :head do
   %script{src: "https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"}
 
+- title = @report.is_a?(Hash) ? (@report["title"] || @report[:title] || "Report #{@report_id}") : "Report #{@report_id}"
+
+.breadcrumb
+  = link_to "Reports", reports_path
+  %span.breadcrumb-sep /
+  %span= title
+
+.page-header
+  %h1= title
+  - if @brand_name
+    %p.text-muted Brand: #{@brand_name}
+
+= form_with url: report_path(@report_id), method: :get, local: true do |f|
+
+  .test-step
+    .test-step-label Choose a query
+    .query-cards
+      .query-card{id: "card-trends", onclick: "document.getElementById('qt_trends').click()"}
+        = f.radio_button :query_type, "trends", id: "qt_trends", checked: @query_type != "not_mentioned"
+        %label.query-card-label{for: "qt_trends"}
+          .query-card-icon 📈
+          .query-card-content
+            %strong % Results Ranked #1
+            %p How often each brand appears as the #1 AI answer across all runs
+
+      .query-card{id: "card-not_mentioned", onclick: "document.getElementById('qt_not_mentioned').click()"}
+        = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned"
+        %label.query-card-label{for: "qt_not_mentioned"}
+          .query-card-icon 🔍
+          .query-card-content
+            %strong Not Mentioned
+            %p Conversations where your brand was completely absent from AI answers
+
+  #brand-key-group{style: "display: none; margin-bottom: 1.5rem;"}
+    .test-step-label Brand key
+    = f.text_field :brand_key, value: @brand_key, placeholder: "e.g. shipiumcom", class: "form-control", style: "max-width: 320px;"
+
+  .test-step
+    = f.submit "Run →", class: "btn btn-primary btn-lg"
+
 - if @error
-  .alert.alert-danger
-    %strong Error:
-    = @error
-- elsif @report
-  - report_id = params[:id]
-  - title = @report['title'] || @report[:title] || "Report #{report_id}"
-  - brand = @report['brand'] || @report[:brand]
-  - brand_name = brand ? (brand['name'] || brand[:name]) : nil
-  - brand_key = brand ? (brand['key'] || brand[:key]) : nil
-  - status = @report['status'] || @report[:status]
-  - latest_ordinal = @latest_ordinal || (@runs&.any? ? (@runs.map { |r| r['ordinal'] || r[:ordinal] }.compact.max || 1) : 1)
+  .alert.alert-danger{style: "margin-top: 1.5rem;"}= @error
 
-  .breadcrumb
-    = link_to "Reports", reports_path
-    %span.breadcrumb-sep /
-    %span= title
+- if @query_type == "trends" && @chart_datasets.present?
+  .result-panel{style: "margin-top: 2rem;"}
+    .result-panel-header
+      %span.result-panel-title 📈 % Results Ranked #1
+      %span.result-panel-sub Computed from API response
+    .result-panel-body
+      %canvas#reportTrendsChart{style: "width: 100%; height: 400px;"}
+  :javascript
+    (function() {
+      const rawLabels = #{@chart_labels.to_json};
+      const labels = rawLabels.map(l => {
+        const d = new Date(l);
+        return isNaN(d) ? l : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      });
+      const palette = ['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#6b7280'];
+      const allDatasets = #{@chart_datasets.to_json};
+      const scored = allDatasets.map(ds => ({ ...ds, peak: Math.max(...ds.data) })).sort((a, b) => b.peak - a.peak);
+      const datasets = [
+        ...scored.slice(0,10).map((ds,i) => ({
+          label: ds.label, data: ds.data,
+          borderColor: palette[i % palette.length],
+          backgroundColor: palette[i % palette.length] + '22',
+          tension: 0.3, pointRadius: 4, fill: false, hidden: false
+        })),
+        ...scored.slice(10).map(ds => ({
+          label: ds.label, data: ds.data,
+          borderColor: '#ccc', backgroundColor: '#cccccc22',
+          tension: 0.3, pointRadius: 2, fill: false, hidden: true
+        }))
+      ];
+      new Chart(document.getElementById('reportTrendsChart'), {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { filter: i => !i.hidden, boxWidth: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+          },
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, title: { display: true, text: '% Ranked #1' } },
+            x: { title: { display: true, text: 'Run Date' } }
+          }
+        }
+      });
+    })();
 
-  .page-header
-    %h1= title
-    %p.text-muted
-      - if brand_name
-        Brand: #{brand_name} ·
-      - if status
-        %span.status{class: status&.downcase}= status&.capitalize
-      · ID:
-      %code{style: "font-size: 0.8rem;"}= report_id
-
-  / ── % Results Ranked #1 ─────────────────────────────────────
-  .panel{style: "margin-bottom: 1.5rem;"}
-    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
-      %div
-        %h3 📈 % Results Ranked #1
-        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} How often each brand appears as the #1 AI answer across all runs
-      .card-header-actions
-    .card-body
-      - if @chart_datasets.present?
-        %canvas#trendsChart{style: "width: 100%; height: 400px;"}
-        :javascript
-          (function() {
-            const rawLabels = #{@chart_labels.to_json};
-            const labels = rawLabels.map(l => {
-              const d = new Date(l);
-              return isNaN(d) ? l : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            });
-            const palette = [
-              '#7c3aed','#2563eb','#dc2626','#d97706','#059669',
-              '#db2777','#0891b2','#65a30d','#9333ea','#ea580c'
-            ];
-            const allDatasets = #{@chart_datasets.to_json};
-            const scored = allDatasets.map(ds => ({ ...ds, peak: Math.max(...ds.data) })).sort((a, b) => b.peak - a.peak);
-            const top10 = scored.slice(0, 10);
-            const rest  = scored.slice(10);
-            const datasets = [
-              ...top10.map((ds, i) => ({
-                label: ds.label, data: ds.data,
-                borderColor: palette[i % palette.length],
-                backgroundColor: palette[i % palette.length] + '22',
-                tension: 0.3, pointRadius: 4, fill: false, hidden: false
-              })),
-              ...rest.map(ds => ({
-                label: ds.label, data: ds.data,
-                borderColor: '#ccc', backgroundColor: '#ccc22',
-                tension: 0.3, pointRadius: 2, fill: false, hidden: true
-              }))
-            ];
-            new Chart(document.getElementById('trendsChart'), {
-              type: 'line',
-              data: { labels, datasets },
-              options: {
-                responsive: true,
-                plugins: {
-                  title: { display: true, text: '% of Results Ranked #1', font: { size: 14 } },
-                  legend: { position: 'bottom', labels: { filter: item => !item.hidden, boxWidth: 12, font: { size: 11 } } },
-                  tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
-                },
-                scales: {
-                  y: { min: 0, title: { display: false }, ticks: { callback: v => v + '%' }, grid: { color: '#e2e8f0' } },
-                  x: { grid: { color: '#e2e8f0' } }
-                }
-              }
-            });
-          })();
-      - else
-        %p.text-muted No run data available yet.
-
-  / ── Not Mentioned ───────────────────────────────────────────
-  .panel{style: "margin-bottom: 1.5rem;"}
-    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
-      %div
-        %h3 🔍 Not Mentioned
-        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} Conversations where #{brand_name || brand_key || "your brand"} was completely absent from AI answers
-      .card-header-actions
-        - if brand_key.present?
-          = link_to "View conversations →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
-        - else
-          = link_to "View conversations →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
-    .card-body
-      - if @latest_stats && @latest_stats[:total] > 0 && brand_key.present?
-        - not_mentioned_count = @latest_stats[:not_mentioned_counts][brand_key] || 0
-        - total = @latest_stats[:total]
-        - mentioned_count = total - not_mentioned_count
-        - pct_not_mentioned = total > 0 ? (not_mentioned_count.to_f / total * 100).round(1) : 0
-        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{total} total conversations
-        .stats-row{style: "margin-bottom: 0;"}
+- elsif @query_type == "not_mentioned"
+  .result-panel{style: "margin-top: 2rem;"}
+    .result-panel-header
+      %span.result-panel-title 🔍 Not Mentioned
+      %span.result-panel-sub Conversations where #{@brand_key} was absent
+    .result-panel-body
+      - if @total_answers.to_i > 0
+        .stats-row{style: "margin-bottom: 1.5rem;"}
           .stat-card
-            .stat-number{style: "color: #dc2626;"}= not_mentioned_count
+            .stat-number{style: "color: #dc2626;"}= @not_mentioned.size
             .stat-label Not Mentioned
           .stat-card
-            .stat-number{style: "color: #dc2626;"}= "#{pct_not_mentioned}%"
+            .stat-number{style: "color: #dc2626;"}= "#{@total_answers > 0 ? (@not_mentioned.size.to_f / @total_answers * 100).round(1) : 0}%"
             .stat-label of Conversations
           .stat-card
-            .stat-number{style: "color: #059669;"}= mentioned_count
+            .stat-number{style: "color: #059669;"}= @total_answers - @not_mentioned.size
             .stat-label Was Mentioned
-      - elsif @latest_stats && @latest_stats[:total] > 0
-        %p.text-muted No brand key set for this report — use "View conversations" to filter by brand.
+        - if @not_mentioned.any?
+          - @not_mentioned.each do |answer|
+            .answer-card
+              .meta
+                %span
+                  %strong Persona:
+                  = answer[:persona_name]
+                %span
+                  %strong Model:
+                  = answer[:model].presence || "—"
+              .question= answer[:question_text]
+              .answer-text= answer[:answer_text]
+        - else
+          %p.text-muted #{@brand_key} appeared in every conversation in this run.
       - else
-        %p.text-muted No data available yet.
+        %p.text-muted No data found.
 
-  / ── All Runs ────────────────────────────────────────────────
-  - if @runs && @runs.any?
-    .panel
-      .card-header
-        %h3 All Runs
-        %span.text-muted{style: "font-size: 0.8rem;"} #{@runs.count} total
-      %table.table{style: "border-radius: 0; box-shadow: none;"}
-        %thead
-          %tr
-            %th Run
-            %th Date
-        %tbody
-          - @runs.each do |run|
-            - ordinal = run['ordinal'] || run[:ordinal]
-            - created_at = run['createdAt'] || run['created_at'] || run[:created_at]
-            %tr
-              %td
-                %strong Run #{ordinal}
-              %td.text-muted
-                - if created_at
-                  = Time.parse(created_at).strftime("%b %d, %Y") rescue created_at
-                - else
-                  —
+:javascript
+  (function() {
+    const radios = document.querySelectorAll('input[name="query_type"]');
+    const brandGroup = document.getElementById('brand-key-group');
+
+    function updateUI() {
+      const selected = document.querySelector('input[name="query_type"]:checked');
+      document.querySelectorAll('.query-card').forEach(c => c.classList.remove('query-card-selected'));
+      if (selected) {
+        document.getElementById('card-' + selected.value)?.classList.add('query-card-selected');
+        brandGroup.style.display = selected.value === 'not_mentioned' ? 'block' : 'none';
+      }
+    }
+
+    radios.forEach(r => r.addEventListener('change', updateUI));
+    updateUI();
+  })();
