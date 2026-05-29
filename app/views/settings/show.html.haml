@@ -6,15 +6,18 @@
   .flow-step= link_to "3 · Reports", reports_path
 
 .page-header
-  %h1 Step 1: Add Your API Key
-  %p.text-muted Your key is stored in your browser session only — never saved to the server
+  %h1 Settings
+  %p.text-muted Manage your API key and customer access
 
 - if notice
   .alert.alert-success= notice
+- if alert
+  .alert.alert-danger= alert
 
-.panel{style: "max-width: 600px;"}
+/ ── API Key ─────────────────────────────────────────────────
+.panel{style: "max-width: 600px; margin-bottom: 2rem;"}
   .card-header
-    %h3 Gumshoe API Key
+    %h3 Step 1: Gumshoe API Key
   .card-body
     = form_with url: settings_path, method: :patch, local: true do |f|
       .form-group{style: "margin-bottom: 1rem;"}
@@ -38,3 +41,39 @@
   .next-step-banner
     %span.next-step-text API key is saved. Ready for the next step.
     = link_to "Continue to Ask →", explore_internal_path, class: "btn btn-primary"
+
+/ ── Customer Access ──────────────────────────────────────────
+.panel{style: "max-width: 700px; margin-top: 2rem;"}
+  .card-header
+    %h3 Customer Access
+    %p{style: "font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0;"} Add customer emails so they can log in and see the customer view
+  .card-body
+    = form_with url: add_customer_settings_path, method: :post, local: true do |f|
+      .form-row{style: "display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;"}
+        .form-group{style: "flex: 2;"}
+          %label{for: "email", style: "display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.375rem;"} Customer Email
+          = f.email_field :email, placeholder: "vivek@customer.com", style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"
+        .form-group{style: "flex: 2;"}
+          %label{for: "note", style: "display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.375rem;"} Note (optional)
+          = f.text_field :note, placeholder: "e.g. Vivek at Acme", style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;"
+        = f.submit "Add →", class: "btn btn-primary", style: "white-space: nowrap; align-self: flex-end;"
+
+    - if @customer_accesses.any?
+      %table.table{style: "margin-top: 1.25rem;"}
+        %thead
+          %tr
+            %th Email
+            %th Note
+            %th Added
+            %th
+        %tbody
+          - @customer_accesses.each do |ca|
+            %tr
+              %td
+                %code{style: "font-size: 0.875rem;"}= ca.email
+              %td.text-muted= ca.note.presence || "—"
+              %td.text-muted= ca.created_at.strftime("%b %d, %Y")
+              %td{style: "text-align: right;"}
+                = button_to "Remove", remove_customer_settings_path(email: ca.email), method: :delete, class: "btn btn-secondary btn-sm", data: { turbo_confirm: "Remove #{ca.email}?" }
+    - else
+      %p.text-muted{style: "margin-top: 1rem; font-size: 0.875rem;"} No customers added yet. Add an email above so they can log in.

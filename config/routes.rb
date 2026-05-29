@@ -39,6 +39,7 @@ Rails.application.routes.draw do
   get "how_to/try_it_live", to: "how_to#try_it_live"
 
   resource :settings, only: [:show, :update] do
-    get :customer
+    post :add_customer
+    delete :remove_customer
   end
 end

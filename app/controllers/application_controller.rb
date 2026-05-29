@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_login
 
-  helper_method :current_employee, :logged_in?
+  helper_method :current_employee, :current_customer, :logged_in?, :employee?
 
   private
 
@@ -12,12 +12,28 @@ class ApplicationController < ActionController::Base
     redirect_to login_path unless logged_in?
   end
 
+  def require_employee
+    redirect_to login_path unless employee?
+  end
+
   def logged_in?
+    session[:employee_email].present? || session[:customer_email].present?
+  end
+
+  def employee?
     session[:employee_email].present?
   end
 
   def current_employee
     session[:employee_email]
+  end
+
+  def current_customer
+    session[:customer_email]
+  end
+
+  def current_user_email
+    current_employee || current_customer
   end
 
   def current_api_key

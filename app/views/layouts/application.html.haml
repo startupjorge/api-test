@@ -19,17 +19,15 @@
         = link_to root_path, class: "logo" do
           = image_tag "gumshoe-logo-white.svg", alt: "Gumshoe", style: "height: 28px; width: auto;"
         .nav-right
-          .nav-internal
-            = link_to "Reports", reports_path, class: "nav-link"
-            = link_to "Explore", explore_internal_path, class: "nav-link"
-            = link_to "⚙ Settings", settings_path, class: "nav-link"
-            - if logged_in?
-              %span.nav-employee= current_employee.split('@').first.capitalize
-              = link_to "Sign out", logout_path, data: { turbo_method: :delete }, class: "nav-link nav-link-signout"
-          .nav-divider
-          .nav-customer
-            %span.nav-customer-label Share
-            = link_to "How To Guide", how_to_path, class: "nav-link nav-link-customer"
+          - if employee?
+            .nav-internal
+              = link_to "Reports", reports_path, class: "nav-link"
+              = link_to "Explore", explore_internal_path, class: "nav-link"
+              = link_to "⚙ Settings", settings_path, class: "nav-link"
+          - if logged_in?
+            .nav-divider
+            %span.nav-employee= (current_employee || current_customer).split('@').first.capitalize
+            = link_to "Sign out", logout_path, data: { turbo_method: :delete }, class: "nav-link nav-link-signout"
     .container
       - if notice
         .alert.alert-success= notice

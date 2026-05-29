@@ -1,5 +1,6 @@
 class ReportsController < ApplicationController
   include GumshoeApiUrls
+  before_action :require_employee, except: [:customer_trends]
 
   def index
     @curl_command = curl_command(reports_url)
