@@ -19,6 +19,13 @@ class CustomQuery < ApplicationRecord
 
   def generate_key
     return if query_key.present?
-    self.query_key = name.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/^_|_$/, "")
+    base = name.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/^_|_$/, "")
+    key  = base
+    n    = 2
+    while CustomQuery.exists?(query_key: key)
+      key = "#{base}_#{n}"
+      n  += 1
+    end
+    self.query_key = key
   end
 end
