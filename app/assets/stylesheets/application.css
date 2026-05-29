@@ -1731,3 +1731,58 @@ body.page-mode-customer {}
 .api-how-to-docs a {
   color: #2563eb;
 }
+
+/* Workflow steps strip */
+.workflow-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.workflow-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a2332;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.workflow-step-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.workflow-step-text strong {
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.workflow-step-text span {
+  font-size: 0.775rem;
+  color: #94a3b8;
+}
+
+.workflow-step-arrow {
+  color: #cbd5e1;
+  font-size: 1rem;
+  font-weight: 300;
+}

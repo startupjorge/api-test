@@ -1,6 +1,24 @@
 .page-header
   %h1 Select a Report & Query
-  %p.text-muted Pick a report below, then choose a query to run against it
+
+.workflow-steps
+  .workflow-step
+    .workflow-step-num 1
+    .workflow-step-text
+      %strong Pick a report
+      %span from the list below
+  .workflow-step-arrow →
+  .workflow-step
+    .workflow-step-num 2
+    .workflow-step-text
+      %strong Choose a query
+      %span % Ranked #1 or Not Mentioned
+  .workflow-step-arrow →
+  .workflow-step
+    .workflow-step-num 3
+    .workflow-step-text
+      %strong Run it
+      %span results appear instantly
 
 - if @error
   .alert.alert-danger= @error
