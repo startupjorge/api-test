@@ -30,6 +30,11 @@
           %strong Click one to use it.
         #qb-field-list{style: "display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem;"}
 
+        %details{style: "margin-top: 1.25rem;"}
+          %summary{style: "cursor: pointer; font-size: 0.82rem; color: #64748b; user-select: none; display: inline-flex; align-items: center; gap: 0.4rem;"}
+            🔍 View raw JSON response
+          #qb-json-explorer{style: "margin-top: 0.75rem; background: #0f172a; border-radius: 8px; padding: 1.25rem 1.5rem; overflow: auto; max-height: 480px; font-family: monospace; font-size: 0.78rem; line-height: 1.8; white-space: pre;"}
+
   / ── Step 3: Configure & save ────────────────────────────────
   #qb-step3{style: "display: none;"}
     .qb-step{style: "margin-top: 1.5rem;"}
@@ -125,6 +130,7 @@
         var fields = [];
         extractFields(resp.data, '', fields);
         renderFieldList(fields);
+        document.getElementById('qb-json-explorer').textContent = JSON.stringify(resp.data, null, 2);
         document.getElementById('qb-step2').style.display = 'block';
         document.getElementById('qb-step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
       })
