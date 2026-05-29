@@ -11,11 +11,18 @@
       %p{style: "margin: 0.25rem 0 0; font-size: 0.875rem; color: #64748b;"} Full API spec — all endpoints, parameters, and response schemas
     = link_to "View API Docs →", "https://app.gumshoe.ai/openapi", target: "_blank", rel: "noopener", class: "btn btn-primary btn-sm"
 
-.explore-recent{style: "margin-bottom: 1.5rem;"}
-  %p.explore-recent-label Recent Runs:
-  %ul.explore-recent-list
-    %li= link_to "% Results Ranked #1", api_query_rank_trends_path, class: "recent-query-link"
-    %li= link_to "Not Mentioned", api_query_not_mentioned_path, class: "recent-query-link"
+- recent_runs = (@query_history || []).select { |h| %w[trends not_mentioned].include?(h["action"]) }
+- if recent_runs.any?
+  .explore-recent{style: "margin-bottom: 1.5rem;"}
+    %p.explore-recent-label Recent Runs:
+    %ul.explore-recent-list
+      - recent_runs.first(10).each do |h|
+        - label = h["action"] == "trends" ? "% Results Ranked #1" : "% of Conversations Not Mentioned"
+        - detail = [h["report_id"], h["brand_key"]].compact.join(" · ")
+        %li
+          = link_to label, explore_internal_path(query: h["query"]), class: "recent-query-link"
+          - if detail.present?
+            %span.recent-query-meta= detail
 
 .feature-grid
 
