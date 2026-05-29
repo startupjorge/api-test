@@ -1,11 +1,24 @@
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
-
-  # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  before_action :require_login
+
+  helper_method :current_employee, :logged_in?
+
   private
+
+  def require_login
+    redirect_to login_path unless logged_in?
+  end
+
+  def logged_in?
+    session[:employee_email].present?
+  end
+
+  def current_employee
+    session[:employee_email]
+  end
 
   def current_api_key
     session[:gumshoe_api_key].presence ||

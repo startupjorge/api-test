@@ -1,0 +1,19 @@
+- content_for :title, "Sign In · Gumshoe"
+.login-page
+  .login-card
+    .login-logo
+      = image_tag "gumshoe-logo-white.svg", alt: "Gumshoe", style: "height: 36px; width: auto;"
+    %h1.login-title Sign in to Gumshoe
+    %p.login-subtitle For Gumshoe team members only
+
+    - if flash[:alert]
+      .alert.alert-danger= flash[:alert]
+
+    = form_with url: login_path, method: :post, local: true do |f|
+      .login-field
+        = f.label :email, "Work email"
+        = f.email_field :email, placeholder: "you@gumshoe.ai", class: "login-input", autofocus: true, value: params[:email]
+      = f.submit "Sign in →", class: "btn btn-primary login-submit"
+
+    %p.login-note
+      Customer? Ask your Gumshoe contact for a shareable link.

@@ -1,4 +1,6 @@
 class ExploreController < ApplicationController
+  skip_before_action :require_login, only: [:customer]
+
   def internal
     process_query if params[:query].present?
   end

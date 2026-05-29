@@ -903,3 +903,107 @@ body.page-mode-customer {}
   color: #065f46;
   font-weight: 500;
 }
+
+/* Login page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  margin-top: -1rem;
+}
+
+.login-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  text-align: center;
+  margin: 0 0 0.375rem;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0 0 1.75rem;
+}
+
+.login-field {
+  margin-bottom: 1.25rem;
+}
+
+.login-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin-bottom: 0.375rem;
+}
+
+.login-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #f8fafc;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+}
+
+.login-submit {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.login-note {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 1.25rem 0 0;
+}
+
+/* Nav employee badge + sign out */
+.nav-employee {
+  font-size: 0.8rem;
+  color: #a5f3c0;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+}
+
+.nav-link-signout {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.nav-link-signout:hover {
+  opacity: 1;
+}

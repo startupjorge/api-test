@@ -1,4 +1,6 @@
 class SettingsController < ApplicationController
+  skip_before_action :require_login, only: [:customer]
+
   def show
   end
 
