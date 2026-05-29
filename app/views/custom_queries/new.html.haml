@@ -4,6 +4,15 @@
   %h1 Add a Custom Query
   %p.text-muted Pick a report, fetch a live run, and click the field you want to chart.
 
+- if @custom_query&.errors&.any?
+  .alert.alert-danger{style: "margin-bottom: 1.5rem;"}
+    - if @custom_query.errors[:query_key].any?
+      %strong A query with this name already exists.
+      = link_to "View your queries →", custom_queries_path, style: "margin-left: 0.5rem;"
+    - else
+      %strong Could not save query:
+      = @custom_query.errors.full_messages.join(", ")
+
 .query-builder
 
   / ── Step 1: Pick a report ───────────────────────────────────
