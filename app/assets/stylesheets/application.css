@@ -1812,7 +1812,7 @@ body.page-mode-customer {}
 }
 
 /* Nav user pill + sign out */
-.nav-employee {
+.nav-employee-old {
   font-size: 0.82rem;
   font-weight: 600;
   color: rgba(255,255,255,0.9);
@@ -1821,4 +1821,14 @@ body.page-mode-customer {}
   border-radius: 99px;
   display: flex;
   align-items: center;
+}
+
+.nav-employee {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  padding: 0.35rem 0.75rem;
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.15);
 }
