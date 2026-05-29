@@ -1415,9 +1415,9 @@ body.page-mode-customer {}
 }
 
 /* Nav employee badge + sign out */
-.nav-employee {
+{PLACEHOLDER
   font-size: 0.8rem;
-  color: #a5f3c0;
+  color: rgba(255,255,255,0.9);
   font-weight: 600;
   padding: 0.25rem 0.6rem;
   background: rgba(255,255,255,0.1);
