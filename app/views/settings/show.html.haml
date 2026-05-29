@@ -23,5 +23,7 @@
             No key set — enter one below to connect to the Gumshoe API
       .btn-group
         = f.submit "Save API Key", class: "btn btn-primary"
-        - if session[:api_key].present?
-          = f.submit "Clear Key", name: "api_key", value: "", class: "btn btn-secondary"
+  - if session[:api_key].present?
+    = form_with url: settings_path, method: :patch, local: true do |f|
+      = f.hidden_field :api_key, value: ""
+      = f.submit "Clear Key", class: "btn btn-secondary"
