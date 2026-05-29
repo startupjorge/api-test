@@ -736,7 +736,7 @@ h2 {
 
 .nav-right { display: flex; align-items: stretch; gap: 0; }
 .nav-internal { display: flex; align-items: center; gap: 4px; padding: 0 8px; }
-.nav-divider { width: 1px; background: rgba(255,255,255,0.12); margin: 12px 8px; }
+.nav-divider { width: 1px; background: rgba(255,255,255,0.12); margin: 10px 12px; }
 .nav-customer { display: flex; align-items: center; gap: 8px; padding: 0 8px; }
 .nav-customer-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(52, 211, 153, 0.7); }
 .nav-link { color: rgba(255,255,255,0.8); text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; transition: background-color 0.15s; }
@@ -1425,7 +1425,8 @@ body.page-mode-customer {}
 }
 
 .nav-link-signout {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.6);
   opacity: 0.7;
 }
 
@@ -1808,4 +1809,16 @@ body.page-mode-customer {}
   color: rgba(255,255,255,0.6);
   margin-left: 0.6rem;
   letter-spacing: 0.01em;
+}
+
+/* Nav user pill + sign out */
+.nav-employee {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  padding: 0.3rem 0.75rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
 }
