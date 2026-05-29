@@ -1,73 +1,45 @@
-- content_for :title, "Share · Gumshoe"
-
-.admin-flow-bar
-  .flow-step.flow-step-done= link_to "1 · API Key", settings_path
-  .flow-step-arrow →
-  .flow-step.flow-step-done= link_to "2 · Test", root_path
-  .flow-step-arrow →
-  .flow-step.flow-step-done= link_to "3 · Reports", reports_path
-  .flow-step-arrow →
-  .flow-step.flow-step-active 4 · Share
+- content_for :title, "Share Access · Gumshoe"
 
 .page-header
-  %h1 Share with Customers
-  %p.text-muted Invite a customer and optionally pre-set their API key — or let them add their own after logging in
+  %h1 Share Access
+  %p.text-muted Generate a unique access link for a customer
 
-.two-col-layout{style: "display: grid; grid-template-columns: 360px 1fr; gap: 2rem; align-items: start;"}
+.two-col-layout{style: "display: grid; grid-template-columns: 400px 1fr; gap: 2rem; align-items: start;"}
 
-  / ── Add customer form ───────────────────────────────────────
   .panel
     .card-header
-      %h3 Add a customer
+      %h3 Generate Access Link
     .card-body
       = form_with url: invite_index_path, method: :post, local: true do |f|
         .form-group{style: "margin-bottom: 1rem;"}
-          = f.label :email, "Email", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+          = f.label :email, "Customer Email", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
           = f.email_field :email,
               placeholder: "customer@company.com",
               class: "form-input",
-              autocomplete: "off",
-              value: @new_customer&.email
+              autocomplete: "off"
         .form-group{style: "margin-bottom: 0.5rem;"}
-          = f.label :api_key, "API Key", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+          = f.label :api_key, "API Key (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
           = f.text_field :api_key,
-              placeholder: "gsorg_live_… (optional)",
+              placeholder: "gsorg_live_… (leave blank for customer to enter)",
               class: "form-input",
               style: "font-family: monospace; font-size: 0.85rem;",
               autocomplete: "off"
           %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.4;"}
-            Leave blank — customer will be prompted to enter their own when they log in
-        = f.submit "Add Customer →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
+            Leave blank — customer will be prompted to enter their own
+        = f.submit "Generate Link →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
 
-  / ── Customer list ───────────────────────────────────────────
   .panel
-    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
-      %h3 Customers
-      - if @customers.any?
-        %span.text-muted{style: "font-size: 0.8rem;"} #{@customers.count} invited
-    - if @customers.any?
-      %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
-        %thead
-          %tr
-            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} Email
-            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} API Key
-            %th{style: "border-bottom: 1px solid #e2e8f0;"}
-        %tbody
-          - @customers.each do |customer|
-            %tr
-              %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #1e293b;"}= customer.email
-              %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}
-                = form_with url: update_key_invite_path(customer), method: :patch, local: true, style: "display: flex; gap: 0.4rem; align-items: center;" do |f|
-                  = f.text_field :api_key,
-                      value: customer.api_key,
-                      placeholder: "not set",
-                      style: "flex: 1; padding: 0.3rem 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.78rem; min-width: 0;",
-                      autocomplete: "off"
-                  = f.submit "Save", class: "btn btn-secondary btn-sm"
-              %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9; text-align: right;"}
-                = button_to "Remove", invite_path(customer), method: :delete,
-                    style: "background: none; border: none; color: #dc2626; font-size: 0.8rem; cursor: pointer; padding: 0.25rem 0;",
-                    data: { turbo_confirm: "Remove #{customer.email}?" }
-    - else
+    - if @access_link
+      .card-header
+        %h3 Access Link for #{@invited_email}
       .card-body
-        %p.text-muted{style: "font-style: italic;"} No customers yet — add one to get started.
+        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 0.75rem;"} Share this link with the customer. It expires in 90 days.
+        .form-group
+          %input.form-input{type: "text", value: @access_link, readonly: true, style: "font-family: monospace; font-size: 0.78rem;", onclick: "this.select()"}
+        %button.btn.btn-secondary{style: "margin-top: 0.5rem; width: 100%;", onclick: "navigator.clipboard.writeText('#{@access_link}').then(() => { this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = 'Copy Link', 2000); }); return false;"}
+          Copy Link
+    - else
+      .card-header
+        %h3 Your link will appear here
+      .card-body
+        %p.text-muted Fill in the form and click Generate Link.

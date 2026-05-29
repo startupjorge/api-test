@@ -27,8 +27,9 @@
                 = link_to "Invite", invite_index_path, class: "nav-link"
           - if logged_in?
             .nav-divider
-            %span.nav-employee= (current_employee || current_customer).split('@').first.capitalize
-            = link_to "Sign out", logout_page_path, class: "nav-link nav-link-signout"
+            - if current_user_email.present?
+              %span.nav-employee= current_user_email.split('@').first.capitalize
+            = link_to "Sign out", logout_path, class: "nav-link nav-link-signout"
     .container
       - if notice
         .alert.alert-success= notice

@@ -3,8 +3,9 @@ Rails.application.routes.draw do
 
   get  "login",  to: "sessions#new",     as: :login
   post "login",  to: "sessions#create"
-  get    "logout", to: "sessions#goodbye", as: :logout_page
-  delete "logout", to: "sessions#destroy", as: :logout
+  get  "logout", to: "sessions#destroy", as: :logout
+
+  get "access/:token", to: "sessions#access", as: :access_link
 
   root "reports#index"
 
@@ -20,24 +21,7 @@ Rails.application.routes.draw do
     end
   end
 
-  get "explore",          to: redirect("/")
-  get "explore/internal", to: redirect("/")
-
-  get "api_calls",   to: redirect("/api_runs")
-  get "api_queries", to: redirect("/api_runs"), as: :api_queries_redirect
-  get "api_runs",                    to: "api_calls#index",             as: :api_queries
-  get "api_runs/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
-  get "api_runs/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
-
-  resources :invite, only: [:index, :create, :destroy] do
-    member do
-      patch :update_key
-    end
-  end
+  resources :invite, only: [:index, :create]
 
   resource :settings, only: [:show, :update]
-
-  get "how_to", to: "how_to#index"
-  get "how_to/customer", to: "how_to#customer", as: :how_to_customer
-  get "how_to/try_it_live", to: "how_to#try_it_live"
 end

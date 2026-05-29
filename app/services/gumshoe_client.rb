@@ -21,6 +21,10 @@ class GumshoeClient
     @api_calls.last&.dig(:curl)
   end
 
+  def me
+    make_request(GumshoeApiUrls.me_url)
+  end
+
   def reports(query = {})
     make_request(GumshoeApiUrls.reports_url, query)
   end

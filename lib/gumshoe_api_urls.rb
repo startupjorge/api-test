@@ -9,6 +9,10 @@ module GumshoeApiUrls
     @base_uri ||= ENV.fetch("GUMSHOE_API_URL", "https://app.gumshoe.ai")
   end
 
+  def me_url
+    "/#{API_VERSION}/me"
+  end
+
   def reports_url
     "/#{API_VERSION}/reports"
   end

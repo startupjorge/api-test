@@ -2,46 +2,51 @@ class SessionsController < ApplicationController
   skip_before_action :require_login
 
   def new
+    redirect_to root_path if logged_in?
   end
 
   def create
-    email = params[:email].to_s.strip.downcase
-    name = email.split("@").first.capitalize
-
-    if email.end_with?("@gumshoe.ai") && email.length > "@gumshoe.ai".length
-      session[:employee_email] = email
-      session.delete(:customer_email)
-      if current_api_key.blank?
-        redirect_to settings_path, notice: "Welcome, #{name}! Start by adding your Gumshoe API key."
-      else
-        redirect_to root_path, notice: "Welcome back, #{name}!"
-      end
-    elsif CustomerAccess.allowed?(email)
-      session[:customer_email] = email
-      session.delete(:employee_email)
-      assigned_key = CustomerAccess.api_key_for(email)
-      session[:gumshoe_api_key] = assigned_key if assigned_key.present?
-      if session[:gumshoe_api_key].blank?
-        redirect_to settings_path, notice: "Welcome, #{name}! Add your Gumshoe API key to get started."
-      else
-        redirect_to reports_path, notice: "Welcome, #{name}!"
-      end
-    else
-      flash.now[:alert] = "That email isn't on the access list. Ask your Gumshoe contact to add you."
-      render :new, status: :unprocessable_entity
+    api_key = params[:api_key].to_s.strip
+    if api_key.blank?
+      flash.now[:alert] = "Please enter your API key."
+      render :new, status: :unprocessable_entity and return
     end
+
+    session[:api_key] = api_key
+
+    # Try to detect user email from the API
+    begin
+      client = GumshoeClient.new(api_key)
+      response = client.me
+      if response&.success?
+        parsed = response.parsed_response
+        email = parsed.is_a?(Hash) ? (parsed["email"] || parsed.dig("data", "email") || parsed.dig("user", "email")) : nil
+        session[:user_email] = email if email.present?
+      end
+    rescue
+      # No profile endpoint available — skip email detection
+    end
+
+    redirect_to root_path
   end
 
   def destroy
-    session.delete(:employee_email)
-    session.delete(:customer_email)
-    redirect_to login_path, notice: "You've been signed out."
+    reset_session
+    redirect_to login_path
   end
 
-  def goodbye
-    # Handles stale GET /logout links — just sign out and show login
-    session.delete(:employee_email)
-    session.delete(:customer_email)
-    redirect_to login_path, notice: "You've been signed out."
+  # Access via shared invite link
+  def access
+    data = Rails.application.message_verifier(:access).verify(params[:token])
+    session[:api_key]     = data[:api_key]    if data[:api_key].present?
+    session[:user_email]  = data[:email]      if data[:email].present?
+
+    if session[:api_key].present?
+      redirect_to root_path, notice: "Welcome! You're now viewing the Gumshoe API."
+    else
+      redirect_to login_path, notice: "Access link accepted — enter your Gumshoe API key to continue."
+    end
+  rescue ActiveSupport::MessageVerifier::InvalidSignature
+    redirect_to login_path, alert: "This access link is invalid or has expired."
   end
 end

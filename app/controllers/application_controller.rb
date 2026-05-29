@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_login
 
-  helper_method :current_employee, :current_customer, :logged_in?, :employee?, :current_api_key
+  helper_method :logged_in?, :employee?, :current_api_key, :current_user_email
 
   private
 
@@ -13,39 +13,24 @@ class ApplicationController < ActionController::Base
   end
 
   def require_employee
-    redirect_to login_path unless employee?
+    redirect_to root_path unless employee?
   end
 
   def logged_in?
-    session[:employee_email].present? || session[:customer_email].present?
+    session[:api_key].present?
   end
 
   def employee?
-    session[:employee_email].present?
-  end
-
-  def current_employee
-    session[:employee_email]
-  end
-
-  def current_customer
-    session[:customer_email]
+    email = session[:user_email].to_s
+    email.present? && email.end_with?("@gumshoe.ai")
   end
 
   def current_user_email
-    current_employee || current_customer
+    session[:user_email]
   end
 
   def current_api_key
-    if current_customer
-      session[:gumshoe_api_key].presence
-    else
-      session[:gumshoe_api_key].presence ||
-        ENV["GUMSHOE_API_KEY"].presence ||
-        Rails.application.credentials.dig(:gumshoe, :api_key)
-    end
-  rescue
-    nil
+    session[:api_key]
   end
 
   def gumshoe_pagination_params
@@ -54,7 +39,6 @@ class ApplicationController < ActionController::Base
 
   def set_gumshoe_pagination(parsed)
     return unless parsed.is_a?(Hash)
-
     @pagination_meta = parsed["meta"] || parsed[:meta]
     links = parsed["links"] || parsed[:links] || {}
     @next_token = gumshoe_token_from_link(links["next"] || links[:next])
@@ -63,7 +47,6 @@ class ApplicationController < ActionController::Base
 
   def gumshoe_token_from_link(link)
     return if link.blank?
-
     Rack::Utils.parse_query(URI.parse(link).query)["token"]
   rescue URI::InvalidURIError
     nil
