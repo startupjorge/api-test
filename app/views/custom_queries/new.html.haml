@@ -44,7 +44,7 @@
           %strong#qb-selected-path —
 
         = form_with url: custom_queries_path, method: :post, local: true do |f|
-          = f.hidden_field :custom_query, name: "custom_query[value_path]", id: "qb-value-path-input"
+          %input{type: "hidden", name: "custom_query[value_path]", id: "qb-value-path-input", value: ""}
 
           .two-col{style: "display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;"}
             .form-group
