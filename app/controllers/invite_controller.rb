@@ -2,12 +2,14 @@ class InviteController < ApplicationController
   before_action :require_employee
 
   def index
-    @customers    = Customer.order(:email)
-    @custom_queries = CustomQuery.active.order(:name)
+    @customers      = Customer.order(:email) rescue []
+    @custom_queries = CustomQuery.active.order(:name) rescue []
     load_reports_for_deeplink
   rescue => e
-    @customers = []
-    flash.now[:alert] = "Could not load customer list: #{e.message}"
+    @customers      ||= []
+    @custom_queries ||= []
+    @deeplink_reports ||= []
+    flash.now[:alert] = "Could not load page: #{e.message}"
   end
 
   def create
@@ -65,9 +67,10 @@ class InviteController < ApplicationController
     load_reports_for_deeplink
     render :index
   rescue => e
-    @customers = Customer.order(:email) rescue []
-    @custom_queries = CustomQuery.active.order(:name)
-    load_reports_for_deeplink
+    @customers      = Customer.order(:email) rescue []
+    @custom_queries = CustomQuery.active.order(:name) rescue []
+    load_reports_for_deeplink rescue nil
+    @deeplink_reports ||= []
     flash.now[:alert] = "Error: #{e.message}"
     render :index, status: :unprocessable_entity
   end

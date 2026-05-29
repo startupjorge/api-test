@@ -98,7 +98,7 @@
   .panel{style: "margin-top: 2rem;"}
     .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
       %h3 Invited Customers
-      %span.text-muted{style: "font-size: 0.8rem;"}= "#{@customers.count} #{"customer".pluralize(@customers.count)}"
+      %span.text-muted{style: "font-size: 0.8rem;"}= "#{@customers.count} #{@customers.count == 1 ? 'customer' : 'customers'}"
     %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
       %thead
         %tr
