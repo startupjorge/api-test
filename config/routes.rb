@@ -28,7 +28,7 @@ Rails.application.routes.draw do
 
   get  "api_calls", to: "api_calls#index", as: :api_calls
 
-  resources :invite, only: [:index, :create, :destroy]
+  resources :invite, only: [:index]
 
   resource :settings, only: [:show, :update]
 

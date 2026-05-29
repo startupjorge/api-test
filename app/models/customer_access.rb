@@ -1,10 +1,16 @@
-class CustomerAccess < ApplicationRecord
-  validates :email, presence: true, uniqueness: { case_sensitive: false },
-                    format: { with: URI::MailTo::EMAIL_REGEXP }
-
-  before_save { self.email = email.downcase.strip }
-
+class CustomerAccess
   def self.allowed?(email)
-    exists?(email: email.to_s.downcase.strip)
+    allowed_emails.include?(email.to_s.downcase.strip)
+  end
+
+  def self.all_emails
+    allowed_emails
+  end
+
+  private
+
+  def self.allowed_emails
+    raw = ENV.fetch("CUSTOMER_EMAILS", "")
+    raw.split(",").map(&:strip).map(&:downcase).reject(&:blank?)
   end
 end
