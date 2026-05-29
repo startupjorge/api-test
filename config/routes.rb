@@ -24,10 +24,11 @@ Rails.application.routes.draw do
   get "explore/internal", to: "explore#internal", as: :explore_internal
   get "explore/customer", to: "explore#customer", as: :explore_customer
 
-  get "api_calls", to: redirect("/api_queries")
-  get "api_queries",                    to: "api_calls#index",             as: :api_queries
-  get "api_queries/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
-  get "api_queries/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
+  get "api_calls",   to: redirect("/api_runs")
+  get "api_queries", to: redirect("/api_runs")
+  get "api_runs",                    to: "api_calls#index",             as: :api_queries
+  get "api_runs/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
+  get "api_runs/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
 
   resources :invite, only: [:index, :create, :destroy] do
     member do
