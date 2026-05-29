@@ -33,12 +33,17 @@
 - recent = (session[:query_history] || []).reject { |h| h["query"] == @query }
 - if recent.any?
   .explore-recent
-    %p.explore-recent-label Recent queries
+    %p.explore-recent-label Recent Runs:
     %ul.explore-recent-list
       - recent.first(8).each do |h|
+        - friendly = case h["action"]
+          - when "trends"        then "% Results Ranked #1"
+          - when "not_mentioned" then "% of Conversations Not Mentioned"
+          - when "list_reports"  then "List Reports"
+          - when "show_report"   then "Report #{h["report_id"]}"
+          - else h["query"]
         %li
-          = link_to h["query"], explore_internal_path(query: h["query"]), class: "recent-query-link"
-          %span.recent-query-meta= h["action"].gsub("_", " ").capitalize
+          = link_to friendly, explore_internal_path(query: h["query"]), class: "recent-query-link"
 
 - if @query.present?
   .explore-results
