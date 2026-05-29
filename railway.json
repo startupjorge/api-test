@@ -1,0 +1,6 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "deploy": {
+    "startCommand": "bundle exec rails db:migrate && bundle exec rails server -p $PORT -e production"
+  }
+}
