@@ -160,31 +160,38 @@
 
   // ── Field catalog: plain-English names + descriptions ────────
   var FIELD_CATALOG = {
-    'visibility.overall.visibilityScore':    { label: 'Overall Visibility Score',      desc: 'Main brand visibility metric — % of AI answers that mention your brand. Start here.', star: true },
-    'visibility.overall.numerator':          { label: 'Mentions (count)',               desc: 'Raw count of answers where your brand was mentioned. Use Visibility Score instead.', skip: true },
-    'visibility.overall.denominator':        { label: 'Total Prompts Evaluated',        desc: 'Total answers analyzed. Not useful as a trend line.', skip: true },
-    'scores.overallScore':                   { label: 'Overall Score',                  desc: 'Composite score across all SEO/AI optimization dimensions.', star: true },
-    'scores.navigationScore':               { label: 'Navigation Score',               desc: 'How easily AI can crawl and understand your site structure.' },
-    'scores.contentBalanceScore':           { label: 'Content Balance Score',          desc: 'Balance of informational vs. promotional content.' },
-    'scores.metadataScore':                 { label: 'Metadata Score',                 desc: 'Quality of title tags, meta descriptions, and structured metadata.' },
-    'scores.pageLayoutStructureScore':      { label: 'Page Layout & Structure Score',  desc: 'Clarity of page hierarchy and visual layout signals.' },
-    'scores.schemaMarkupScore':             { label: 'Schema Markup Score',            desc: 'Presence and correctness of schema.org markup.' },
-    'scores.structuredDataAssessmentScore': { label: 'Structured Data Score',          desc: 'Overall structured data health across the site.' },
-    'sample.totalPrompts':                  { label: 'Total Prompts',                  desc: 'Number of questions evaluated. Not useful as a trend line.', skip: true },
-    'sourcesTop.totals.totalSources':       { label: 'Total Sources Cited',            desc: 'How many unique sources were cited across all answers.' },
+    // ── Visibility ───────────────────────────────────────────────
+    'visibility.overall.visibilityScore':         { label: 'Overall Visibility Score',         desc: 'The main number — how often your brand appears across all AI answers. This is what your customers are tracking.', star: true },
+    'visibility.overall.numerator':               { label: 'Overall Mentions (raw count)',      desc: 'How many answers mentioned your brand. Use Visibility Score (%) instead.', skip: true },
+    'visibility.overall.denominator':             { label: 'Total Prompts Evaluated',           desc: 'Total answers analyzed in this run. Not useful as a trend line.', skip: true },
+    'visibility.byModel[0].visibilityScore':      { label: 'Visibility Score — by AI Model',   desc: 'Visibility broken down per AI model (Claude, GPT-4, etc.). Plots the first model.' },
+    'visibility.byModel[0].numerator':            { label: 'Model Mentions (raw count)',        desc: 'Raw mention count per model. Use the score % instead.', skip: true },
+    'visibility.byModel[0].denominator':          { label: 'Model Total Prompts',               desc: 'Total prompts per model. Not useful as a trend line.', skip: true },
+    'visibility.byTopic[0].visibilityScore':      { label: 'Visibility Score — by Topic',      desc: 'Visibility broken down per topic/category. Plots the first topic.' },
+    'visibility.byTopic[0].numerator':            { label: 'Topic Mentions (raw count)',        desc: 'Raw mention count per topic. Use the score % instead.', skip: true },
+    'visibility.byTopic[0].denominator':          { label: 'Topic Total Prompts',               desc: 'Total prompts per topic. Not useful as a trend line.', skip: true },
+    'visibility.byPersona[0].visibilityScore':    { label: 'Visibility Score — by Persona',    desc: 'Visibility broken down per buyer persona. Plots the first persona.' },
+    'visibility.byPersona[0].numerator':          { label: 'Persona Mentions (raw count)',      desc: 'Raw mention count per persona. Use the score % instead.', skip: true },
+    'visibility.byPersona[0].denominator':        { label: 'Persona Total Prompts',             desc: 'Total prompts per persona. Not useful as a trend line.', skip: true },
+    // ── Scores ───────────────────────────────────────────────────
+    'scores.overallScore':                        { label: 'Overall Score',                     desc: 'Composite score across all SEO/AI optimization dimensions.', star: true },
+    'scores.navigationScore':                     { label: 'Navigation Score',                  desc: 'How easily AI can crawl and understand your site structure.' },
+    'scores.contentBalanceScore':                 { label: 'Content Balance Score',             desc: 'Balance of informational vs. promotional content.' },
+    'scores.metadataScore':                       { label: 'Metadata Score',                    desc: 'Quality of title tags, meta descriptions, and structured metadata.' },
+    'scores.pageLayoutStructureScore':            { label: 'Page Layout & Structure Score',     desc: 'Clarity of page hierarchy and visual layout signals.' },
+    'scores.schemaMarkupScore':                   { label: 'Schema Markup Score',               desc: 'Presence and correctness of schema.org markup.' },
+    'scores.structuredDataAssessmentScore':       { label: 'Structured Data Score',             desc: 'Overall structured data health across the site.' },
+    // ── Other ────────────────────────────────────────────────────
+    'sample.totalPrompts':                        { label: 'Total Prompts',                     desc: 'Number of questions evaluated. Not useful as a trend line.', skip: true },
+    'sourcesTop.totals.totalSources':             { label: 'Total Sources Cited',               desc: 'How many unique sources were cited across all answers.' },
   };
 
   function catalogFor(path) {
-    // Exact match
+    // Exact match first
     if (FIELD_CATALOG[path]) return FIELD_CATALOG[path];
-    // Fuzzy: strip array indices and try again
-    var stripped = path.replace(/\[\d+\]/g, '[0]');
-    if (FIELD_CATALOG[stripped]) return FIELD_CATALOG[stripped];
-    // Match by suffix key
-    var key = path.split('.').pop();
-    for (var p in FIELD_CATALOG) {
-      if (p.endsWith('.' + key)) return FIELD_CATALOG[p];
-    }
+    // Normalize array indices (e.g. [1] → [0]) and try again
+    var normalized = path.replace(/\[\d+\]/g, '[0]');
+    if (FIELD_CATALOG[normalized]) return FIELD_CATALOG[normalized];
     return null;
   }
 
