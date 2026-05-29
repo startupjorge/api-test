@@ -1,3 +1,5 @@
 #!/bin/bash -e
 
+bundle exec rails db:migrate 2>/dev/null || true
+
 exec "${@}"

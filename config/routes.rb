@@ -31,7 +31,11 @@ Rails.application.routes.draw do
   get "api_queries/rank_trends",        to: "api_calls#rank_trends",       as: :api_query_rank_trends
   get "api_queries/not_mentioned",      to: "api_calls#not_mentioned",     as: :api_query_not_mentioned
 
-  resources :invite, only: [:index]
+  resources :invite, only: [:index, :create, :destroy] do
+    member do
+      patch :update_key
+    end
+  end
 
   resource :settings, only: [:show, :update]
 

@@ -2,49 +2,53 @@
 
 .page-header
   %h1 Invite Customers
-  %p.text-muted Add customers and optionally pre-set their API key — or let them add their own
+  %p.text-muted Add customers and optionally pre-set their Gumshoe API key
 
-.panel{style: "max-width: 720px;"}
+.panel{style: "max-width: 600px; margin-bottom: 2rem;"}
   .card-header
-    %h3 Step 1 — Add customer emails
+    %h3 Add a customer
   .card-body
-    %p{style: "color: #374151; margin-bottom: 0.75rem;"} In Railway: <strong>api-test → Variables → CUSTOMER_EMAILS</strong>
-    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} vivek@acme.com,jane@company.com
-    %p.text-muted{style: "font-size: 0.8rem;"} Comma-separated list. Railway redeploys automatically — customers can log in within ~3 minutes.
-
-.panel{style: "max-width: 720px; margin-top: 1.5rem;"}
-  .card-header
-    %h3 Step 2 — Assign API keys (optional)
-  .card-body
-    %p{style: "color: #374151; margin-bottom: 0.75rem;"} In Railway: <strong>api-test → Variables → CUSTOMER_KEYS</strong>
-    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} vivek@acme.com:gsorg_live_abc123,jane@company.com:gsorg_live_xyz789
-    %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 0.5rem;"}
-      Format:
-      %code email:api_key
-      — comma-separated. Use a real key or a placeholder.
-    %p.text-muted{style: "font-size: 0.8rem;"}
-      If no key is assigned, the customer is prompted to enter their own when they log in.
+    = form_with url: invite_index_path, method: :post, local: true do |f|
+      .form-group{style: "margin-bottom: 0.75rem;"}
+        = f.label :email, "Email", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.email_field :email, placeholder: "customer@company.com",
+            style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;",
+            autocomplete: "off", value: @new_customer&.email
+      .form-group{style: "margin-bottom: 1rem;"}
+        = f.label :api_key, "Gumshoe API Key", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.text_field :api_key, placeholder: "gsorg_live_… (optional — customer can add their own)",
+            style: "width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.875rem;",
+            autocomplete: "off"
+        %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.3rem;"} Leave blank and the customer will be prompted to enter their own key when they log in
+      = f.submit "Add Customer", class: "btn btn-primary"
 
 - if @customers.any?
-  .panel{style: "max-width: 720px; margin-top: 1.5rem;"}
+  .panel{style: "max-width: 720px;"}
     .card-header
-      %h3 Currently invited
+      %h3 Customers
+      %span.text-muted{style: "font-size: 0.8rem;"} #{@customers.count} total
     %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
       %thead
         %tr
           %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Email
           %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} API Key
+          %th{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0;"}
       %tbody
-        - @customers.each do |c|
+        - @customers.each do |customer|
           %tr
-            %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= c[:email]
+            %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= customer.email
             %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}
-              - if c[:api_key].present?
-                %span{style: "color: #059669; font-size: 0.8rem; font-family: monospace;"}= "#{c[:api_key][0..11]}…"
-                %span{style: "color: #059669; font-size: 0.75rem; margin-left: 0.4rem;"} ✓ set
-              - else
-                %span{style: "color: #f59e0b; font-size: 0.8rem;"} not set — customer will add their own
+              = form_with url: update_key_invite_path(customer), method: :patch, local: true, style: "display: flex; gap: 0.5rem; align-items: center;" do |f|
+                = f.text_field :api_key, value: customer.api_key,
+                    placeholder: "gsorg_live_…",
+                    style: "flex: 1; padding: 0.35rem 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.8rem;",
+                    autocomplete: "off"
+                = f.submit "Save", class: "btn btn-secondary btn-sm"
+            %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; text-align: right;"}
+              = button_to "Remove", invite_path(customer), method: :delete,
+                  style: "background: none; border: none; color: #dc2626; font-size: 0.8rem; cursor: pointer; padding: 0;",
+                  data: { confirm: "Remove #{customer.email}?" }
 - else
-  .panel{style: "max-width: 720px; margin-top: 1.5rem;"}
+  .panel{style: "max-width: 720px;"}
     .card-body
-      %p.text-muted No customers invited yet. Set CUSTOMER_EMAILS in Railway to get started.
+      %p.text-muted No customers yet. Add one above.
