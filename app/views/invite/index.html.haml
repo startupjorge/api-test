@@ -25,8 +25,12 @@
               class: "form-input",
               style: "font-family: monospace; font-size: 0.85rem;",
               autocomplete: "off"
-          %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.4;"}
-            Leave blank — customer will be prompted to enter their own
+          %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.6;"}
+            %strong{style: "color: #059669;"} Pre-filled:
+            Customer clicks the link and lands directly on their reports — no setup needed.
+            %br
+            %strong{style: "color: #64748b;"} Left blank:
+            Customer clicks the link but must enter their own API key first before seeing any data.
         .form-group{style: "margin-bottom: 0.5rem;"}
           = f.label :expires_in, "Link Expires", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
           = f.select :expires_in,
