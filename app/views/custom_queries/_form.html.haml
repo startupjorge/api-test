@@ -22,21 +22,24 @@
           = f.text_field :y_axis_label, class: "form-input", placeholder: "e.g. Score (%)"
 
       .form-group{style: "margin-bottom: 1.25rem;"}
-        = f.label :value_path, "API Field Path", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
-        = f.text_field :value_path, class: "form-input", style: "font-family: monospace;", placeholder: "e.g. scores.overallScore"
+        = f.label :value_path, "API Field", style: "display: block; font-weight: 600; margin-bottom: 0.4rem;"
+        = f.select :value_path,
+            [
+              ["── Report Run Scores ──────────────────", ""],
+              ["Overall Score",                          "scores.overallScore"],
+              ["Navigation Score",                       "scores.navigationScore"],
+              ["Content Balance Score",                  "scores.contentBalanceScore"],
+              ["Metadata Score",                         "scores.metadataScore"],
+              ["Page Layout & Structure Score",          "scores.pageLayoutStructureScore"],
+              ["Schema Markup Score",                    "scores.schemaMarkupScore"],
+              ["Structured Data Assessment Score",       "scores.structuredDataAssessmentScore"],
+            ],
+            { selected: custom_query.value_path },
+            { class: "form-input" }
         %p.text-muted{style: "font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.5;"}
-          Dot-notation path into the
+          Pulled from
           %code GET /v1/reports/{id}/runs/{ordinal}
-          response under
-          %code data
-          \.
-          %br
-          Examples:
-          %code scores.overallScore
-          ·
-          %code scores.navigationScore
-          ·
-          %code scores.metadataScore
+          and plotted over time across all runs.
 
       .form-group{style: "margin-bottom: 1.25rem;"}
         = f.label :active, style: "display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;"
