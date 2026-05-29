@@ -1,6 +1,8 @@
-#!/bin/bash -e
+#!/bin/bash
 
-mkdir -p /rails/storage
-bundle exec rails db:migrate
+mkdir -p /rails/storage 2>/dev/null || true
+echo "Storage dir: $(ls -la /rails/storage 2>&1)"
+echo "Running as: $(id)"
+bundle exec rails db:migrate 2>&1 || echo "Migration failed — app will start without DB"
 
 exec "${@}"
