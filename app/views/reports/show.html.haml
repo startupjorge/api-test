@@ -410,6 +410,38 @@
                       m.dig("brand", "key") == "#{@brand_key}"
                     end
                   end
+      - elsif @active_custom_query
+        %p.api-how-to-intro
+          This chart plots #{"`"}#{@active_custom_query.value_path}#{"`"} from each run's response over time.
+        .api-how-to-steps
+          .api-how-to-step
+            %span.step-num 1
+            .step-content
+              %strong List all runs for this report
+              %code.api-endpoint GET /v1/reports/#{@report_id}/runs
+              - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
+              - if runs_call
+                %pre.api-curl= runs_call[:curl]
+          .api-how-to-step
+            %span.step-num 2
+            .step-content
+              %strong Fetch the scored result for each run
+              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal
+              - run_call = @api_calls&.find { |c| c[:url].to_s.match?(%r{/runs/\d+$}) }
+              - if run_call
+                %pre.api-curl= run_call[:curl]
+          .api-how-to-step
+            %span.step-num 3
+            .step-content
+              %strong Extract the value
+              %p.text-muted Dig into the response using the path:
+              %pre.api-curl
+                :preserve
+                  #{@active_custom_query.value_path}
+              %p.text-muted In Ruby:
+              %pre.api-curl
+                :preserve
+                  data.dig(#{@active_custom_query.value_path.split('.').map { |k| "\"#{k}\"" }.join(', ')})
 :javascript
   (function() {
     const radios = document.querySelectorAll('input[name="query_type"]');
