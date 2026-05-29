@@ -68,10 +68,6 @@ class ReportRunsController < ApplicationController
     build_not_mentioned_data
   end
 
-  def customer_not_mentioned
-    build_not_mentioned_data
-  end
-
   def raw
     begin
       client = GumshoeClient.new(current_api_key)

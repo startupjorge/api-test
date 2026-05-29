@@ -9,8 +9,6 @@
   %div
     %h1 Not Mentioned — Run #{@ordinal}
     %p.text-muted Report ##{@report_id} · Conversations where a brand was completely absent from AI answers
-  .btn-group
-    = link_to "📤 Share Externally", customer_not_mentioned_report_run_path(report_id: @report_id, ordinal: @ordinal, brand_key: @brand_key), class: "btn btn-share btn-sm"
 
 - if @error
   .alert.alert-danger

@@ -79,9 +79,6 @@ class ReportsController < ApplicationController
     build_trends_data
   end
 
-  def customer_trends
-    build_trends_data
-  end
 
   private
 

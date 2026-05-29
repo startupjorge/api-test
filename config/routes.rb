@@ -11,13 +11,11 @@ Rails.application.routes.draw do
   resources :reports, only: [ :index, :show ] do
     member do
       get :trends
-      get :customer_trends
     end
     resources :runs, only: [ :index, :show ], controller: "report_runs", param: :ordinal do
       member do
         get "raw"
         get "not_mentioned"
-        get "customer_not_mentioned"
       end
     end
   end
