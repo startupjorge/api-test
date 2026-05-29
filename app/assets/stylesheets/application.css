@@ -1921,3 +1921,22 @@ body.page-mode-customer {}
   overflow-wrap: break-word;
   word-break: break-all;
 }
+
+/* Query builder mode toggle */
+.qb-mode-btn {
+  padding: 0.3rem 0.875rem;
+  border: none;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.qb-mode-btn:first-child { border-right: 1px solid #e2e8f0; }
+.qb-mode-btn.active {
+  background: #1e293b;
+  color: #fff;
+  font-weight: 600;
+}
+.qb-mode-btn:hover:not(.active) { background: #f8fafc; }

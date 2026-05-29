@@ -25,15 +25,22 @@
         .qb-step-num 2
         %strong Pick a field to chart
       .qb-step-body
-        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 1rem;"}
-          Fields pulled live from this report's latest run.
-          %strong Start with a ⭐ Recommended field — click it to select.
+        .qb-mode-bar{style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;"}
+          %p.text-muted{style: "font-size: 0.85rem; margin: 0;"}
+            %span#qb-mode-hint
+              Fields pulled live from this report's latest run.
+              %strong Start with a ⭐ Recommended field — click it to select.
+          .qb-mode-toggle{style: "display: flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; flex-shrink: 0; margin-left: 1rem;"}
+            %button#qb-mode-simple.qb-mode-btn.active{type: "button", onclick: "qbSetMode('simple')"} Simple
+            %button#qb-mode-dev.qb-mode-btn{type: "button", onclick: "qbSetMode('developer')"} Developer
+
         #qb-field-list{style: "display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem;"}
 
-        %details{style: "margin-top: 1.25rem;"}
-          %summary{style: "cursor: pointer; font-size: 0.82rem; color: #64748b; user-select: none; display: inline-flex; align-items: center; gap: 0.4rem;"}
-            🔍 View raw JSON response
-          #qb-json-explorer{style: "margin-top: 0.75rem; background: #0f172a; border-radius: 8px; padding: 1.25rem 1.5rem; overflow: auto; max-height: 480px; font-family: monospace; font-size: 0.78rem; line-height: 1.8; white-space: pre;"}
+        #qb-raw-json-wrap{style: "display: none; margin-top: 1.25rem;"}
+          %details
+            %summary{style: "cursor: pointer; font-size: 0.82rem; color: #64748b; user-select: none; display: inline-flex; align-items: center; gap: 0.4rem;"}
+              🔍 View raw JSON response
+            #qb-json-explorer{style: "margin-top: 0.75rem; background: #0f172a; border-radius: 8px; padding: 1.25rem 1.5rem; overflow: auto; max-height: 480px; font-family: monospace; font-size: 0.78rem; line-height: 1.8; white-space: pre;"}
 
   / ── Step 3: Configure & save ────────────────────────────────
   #qb-step3{style: "display: none;"}
@@ -76,6 +83,26 @@
             = link_to "Cancel", custom_queries_path, class: "btn btn-secondary"
 
 :javascript
+  // ── Mode toggle: simple (default) vs developer ───────────────
+  var qbMode = 'simple';
+
+  function qbSetMode(mode) {
+    qbMode = mode;
+    document.getElementById('qb-mode-simple').classList.toggle('active', mode === 'simple');
+    document.getElementById('qb-mode-dev').classList.toggle('active', mode === 'developer');
+    document.getElementById('qb-raw-json-wrap').style.display = mode === 'developer' ? 'block' : 'none';
+
+    var hint = document.getElementById('qb-mode-hint');
+    if (mode === 'simple') {
+      hint.innerHTML = 'Fields pulled live from this report\'s latest run. <strong>Start with a ⭐ Recommended field — click it to select.</strong>';
+    } else {
+      hint.innerHTML = 'All numeric fields from the API response. Expand the JSON below to see the full structure.';
+    }
+
+    // Re-render with current fields if already loaded
+    if (window._qbLastFields) renderFieldList(window._qbLastFields);
+  }
+
   // Keys to skip — IDs, metadata, not chartable
   var SKIP_KEYS = new Set(['id','ordinal','rank','order','count','total','page','limit','offset','status','position']);
   var SKIP_SUFFIXES = ['Id','Ids','Count','Total','Ordinal','Order','Rank','Page','Limit','Offset'];
@@ -129,6 +156,7 @@
         status.textContent = 'Run #' + resp.ordinal + ' loaded — pick a field below.';
         var fields = [];
         extractFields(resp.data, '', fields);
+        window._qbLastFields = fields;
         renderFieldList(fields);
         document.getElementById('qb-json-explorer').textContent = JSON.stringify(resp.data, null, 2);
         document.getElementById('qb-step2').style.display = 'block';
@@ -205,7 +233,7 @@
       return;
     }
 
-    // Group: starred → regular → skip
+    // In simple mode, show only starred. In developer mode, show all.
     var starred = [], regular = [], skippable = [];
     fields.forEach(function(f) {
       var cat = catalogFor(f.path);
@@ -213,6 +241,16 @@
       else if (cat && cat.skip) skippable.push({ f: f, cat: cat });
       else regular.push({ f: f, cat: cat });
     });
+
+    if (qbMode === 'simple') {
+      // Only show starred; if none, fall back to all
+      if (starred.length === 0) {
+        // nothing starred for this report — show everything
+      } else {
+        renderGroup(starred, '⭐ Recommended — start here', 'color:#166534;');
+        return;
+      }
+    }
 
     function renderGroup(items, groupLabel, groupStyle) {
       if (items.length === 0) return;
