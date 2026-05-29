@@ -48,15 +48,8 @@
         .form-group{style: "margin-bottom: 0.5rem;"}
           = f.label :report_id, "Deep-link to Report (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
           - if @deeplink_reports.present?
-            = f.select :report_id,
-                [["— No deep link, show all reports —", ""]] + @deeplink_reports.map { |r|
-                  brand = r["brand"] || r[:brand] || {}
-                  label = brand["name"] || brand[:name] || r["id"] || r[:id]
-                  id    = r["id"]    || r[:id]
-                  [label, id]
-                },
-                { selected: params[:report_id] },
-                { class: "form-input", id: "deeplink_report_select", onchange: "toggleQuerySelect(this)" }
+            - report_options = [["— No deep link, show all reports —", ""]] + @deeplink_reports.map { |r| brand = r["brand"] || r[:brand] || {}; label = brand["name"] || brand[:name] || r["id"] || r[:id]; id = r["id"] || r[:id]; [label, id] }
+            = f.select :report_id, report_options, { selected: params[:report_id] }, { class: "form-input", id: "deeplink_report_select", onchange: "toggleQuerySelect(this)" }
           - else
             %p.text-muted{style: "font-size: 0.78rem;"} Set your API key in Settings to enable deep-linking to a specific report.
         .form-group{style: "margin-bottom: 0.5rem;", id: "query_type_group", class: params[:report_id].blank? ? "hidden" : ""}
