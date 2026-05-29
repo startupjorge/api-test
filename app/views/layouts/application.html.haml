@@ -18,6 +18,7 @@
       .container
         = link_to root_path, class: "logo" do
           = image_tag "gumshoe-logo-white.svg", alt: "Gumshoe", style: "height: 28px; width: auto;"
+          %span.logo-app-name API Test Center
         .nav-right
           - if logged_in?
             .nav-internal
