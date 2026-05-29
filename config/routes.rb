@@ -20,9 +20,7 @@ Rails.application.routes.draw do
     end
   end
 
-  get "explore",          to: redirect("/explore/internal")
-  get "explore/internal", to: "explore#internal", as: :explore_internal
-  get "explore/customer", to: "explore#customer", as: :explore_customer
+  get "explore", to: redirect("/")
 
   get "api_calls",   to: redirect("/api_runs")
   get "api_queries", to: redirect("/api_runs")

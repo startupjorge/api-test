@@ -10,7 +10,7 @@
     %h1.explore-title Ask a question about your brand data
     %p.explore-subtitle Enter a question below and hit Run — we'll pull the latest data from the Gumshoe API and show you the results.
 
-  = form_with url: explore_customer_path, method: :get, local: true do |f|
+  = form_with url: root_path, method: :get, local: true do |f|
     .explore-input-row
       = f.text_field :query, value: @query,
           placeholder: "e.g. Show rank trends for report 22110",

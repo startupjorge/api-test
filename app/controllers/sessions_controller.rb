@@ -14,7 +14,7 @@ class SessionsController < ApplicationController
       if current_api_key.blank?
         redirect_to settings_path, notice: "Welcome, #{name}! Start by adding your Gumshoe API key."
       else
-        redirect_to explore_internal_path, notice: "Welcome back, #{name}!"
+        redirect_to root_path, notice: "Welcome back, #{name}!"
       end
     elsif CustomerAccess.allowed?(email)
       session[:customer_email] = email

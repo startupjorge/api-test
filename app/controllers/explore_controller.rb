@@ -1,91 +1,57 @@
 class ExploreController < ApplicationController
 
   def internal
-    process_query if params[:query].present?
-  end
+    @reports = load_reports_list
 
-  def customer
-    process_query if params[:query].present?
-  end
+    if params[:report_id].present? && params[:query_type].present?
+      @report_id  = params[:report_id]
+      @query_type = params[:query_type]
+      @brand_key  = params[:brand_key].to_s.strip.presence
+      @ordinal    = params[:ordinal].presence || "1"
 
-  private
+      client = GumshoeClient.new(current_api_key)
 
-  def process_query
-    @query = params[:query].to_s.strip
-    @intent = detect_intent(@query)
-    return if @intent[:action] == :unknown
+      case @query_type
+      when "trends"        then build_trends(client)
+      when "not_mentioned" then build_not_mentioned(client)
+      end
 
-    client = GumshoeClient.new(current_api_key)
-
-    case @intent[:action]
-    when :trends        then build_trends(client)
-    when :not_mentioned then build_not_mentioned(client)
-    when :list_reports  then build_reports_list(client)
-    when :show_report   then build_report(client)
+      save_query_to_history(@query_type, @report_id, @brand_key) unless @result_error
     end
-
-    save_query_to_history(@query, @intent)
   rescue => e
     @result_error = e.message
     Rails.logger.error "ExploreController error: #{e.class} - #{e.message}"
   end
 
-  def save_query_to_history(query, intent)
+  def customer
+    redirect_to root_path
+  end
+
+  private
+
+  def load_reports_list
+    return [] if current_api_key.blank?
+    client = GumshoeClient.new(current_api_key)
+    response = client.reports({})
+    return [] unless response.success?
+    parsed = response.parsed_response
+    parsed.is_a?(Hash) ? (parsed["data"] || parsed["reports"] || []) : (parsed || [])
+  rescue
+    []
+  end
+
+  def save_query_to_history(action, report_id, brand_key)
     history = session[:query_history] || []
     history.unshift(
-      "query"       => query,
-      "action"      => intent[:action].to_s,
-      "report_id"   => intent[:report_id],
-      "brand_key"   => intent[:brand_key],
-      "ordinal"     => intent[:ordinal],
-      "ran_at"      => Time.current.iso8601
+      "action"    => action.to_s,
+      "report_id" => report_id,
+      "brand_key" => brand_key,
+      "ran_at"    => Time.current.iso8601
     )
     session[:query_history] = history.first(50)
   end
 
-  def detect_intent(query)
-    q = query.downcase
-
-    # Extract report ID — handles "22110", "rpt_abc", "report 22110"
-    report_id =
-      q.match(/\b(rpt_[a-z0-9_]+)\b/)&.[](1) ||
-      q.match(/report\s+#?([a-z0-9_]+)/i)&.[](1) ||
-      q.match(/\b(\d{4,6})\b/)&.[](1)
-
-    # Extract run ordinal
-    ordinal =
-      q.match(/run\s+#?(\d+)/i)&.[](1) ||
-      q.match(/ordinal\s+(\d+)/i)&.[](1) || "1"
-
-    # Extract brand key — word following common cues
-    brand_key =
-      q.match(/(?:for brand|brand[:\s]+|brand key[:\s]+)([a-z0-9_-]+)/i)&.[](1) ||
-      q.match(/(?:not mentioned|missing|absent)\s+(?:for\s+)?([a-z0-9_-]+)/i)&.[](1) ||
-      q.match(/brand[:\s]+([a-z0-9_-]+)/i)&.[](1)
-
-    action =
-      if q =~ /trend|rank over|over time|chart|ranking over|how.*rank|ranked.*over|%.*rank|rank.*#1|ranked.*#1|results ranked|ranked #1|percent.*rank|rank.*percent/
-        :trends
-      elsif q =~ /not mention|missing|absent|gap|never|without.*mention/
-        :not_mentioned
-      elsif q =~ /list|show all|all report|my report/
-        :list_reports
-      elsif report_id
-        :show_report
-      else
-        :unknown
-      end
-
-    { action:, report_id:, ordinal:, brand_key: }
-  end
-
   def build_trends(client)
-    unless @intent[:report_id]
-      redirect_to api_query_rank_trends_path and return
-    end
-    @result_type = :trends
-    @report_id = @intent[:report_id]
-
     runs = client.get_runs(@report_id)
     mutex = Mutex.new
     raw_by_ordinal = {}
@@ -100,13 +66,13 @@ class ExploreController < ApplicationController
     threads.each(&:join)
 
     brand_series = {}
-    run_labels = {}
+    run_labels   = {}
 
     raw_by_ordinal.each do |ordinal, data|
       run = data[:run]
       raw = data[:raw]
       run_labels[ordinal] = run["createdAt"] || run[:created_at] || ordinal.to_s
-      brand_counts = Hash.new(0)
+      brand_counts  = Hash.new(0)
       total_answers = 0
 
       (raw["personas"] || []).each do |persona|
@@ -137,19 +103,20 @@ class ExploreController < ApplicationController
     @chart_datasets = brand_series.map do |_key, series|
       { label: series[:name], data: sorted_ordinals.map { |o| series[:points][o] || 0 } }
     end
+    @result_type    = :trends
+    @api_endpoints  = [
+      "GET /reports/#{@report_id}/runs",
+      "GET /reports/#{@report_id}/runs/:ordinal/raw  (fetched #{runs.size} runs)"
+    ]
   end
 
   def build_not_mentioned(client)
-    unless @intent[:report_id] && @intent[:brand_key]
-      redirect_to api_query_not_mentioned_path and return
+    unless @brand_key.present?
+      @result_error = "Please enter a brand key to check who's not mentioned."
+      return
     end
 
-    @result_type = :not_mentioned
-    @report_id = @intent[:report_id]
-    @ordinal   = @intent[:ordinal]
-    @brand_key = @intent[:brand_key]
-
-    raw = client.get_raw(@report_id, @ordinal)
+    raw         = client.get_raw(@report_id, @ordinal)
     all_answers = []
 
     (raw["personas"] || []).each do |persona|
@@ -161,10 +128,10 @@ class ExploreController < ApplicationController
           all_answers << {
             persona_name:,
             question_text: q_text,
-            model: q_model,
-            answer_text: answer["text"] || "",
-            citations: answer["citations"] || [],
-            mentions:  answer["mentions"]  || []
+            model:         q_model,
+            answer_text:   answer["text"] || "",
+            citations:     answer["citations"] || [],
+            mentions:      answer["mentions"]  || []
           }
         end
       end
@@ -176,28 +143,7 @@ class ExploreController < ApplicationController
         (m["brand"] || m[:brand] || {}).values_at("key", :key).compact.any? { |k| k == @brand_key }
       end
     end
-  end
-
-  def build_reports_list(client)
-    @result_type = :reports
-    response = client.reports({})
-    if response.success?
-      parsed = response.parsed_response
-      @reports = parsed.is_a?(Hash) ? (parsed["data"] || parsed["reports"] || []) : parsed
-    else
-      @result_error = "Failed to fetch reports: HTTP #{response.code}"
-    end
-  end
-
-  def build_report(client)
-    @result_type = :report
-    @report_id = @intent[:report_id]
-    response = client.report(@report_id)
-    if response.success?
-      parsed = response.parsed_response
-      @report = parsed.is_a?(Hash) ? (parsed["data"] || parsed["report"] || parsed) : parsed
-    else
-      @result_error = "Failed to fetch report: HTTP #{response.code}"
-    end
+    @result_type   = :not_mentioned
+    @api_endpoints = ["GET /reports/#{@report_id}/runs/#{@ordinal}/raw"]
   end
 end

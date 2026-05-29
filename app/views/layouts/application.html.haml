@@ -21,7 +21,7 @@
         .nav-right
           - if logged_in?
             .nav-internal
-              = link_to "Explore Gumshoe API", explore_internal_path, class: "nav-link"
+              = link_to "Explore Gumshoe API", root_path, class: "nav-link"
               = link_to "My Reports", reports_path, class: "nav-link"
               = link_to "API Runs & Details", api_queries_path, class: "nav-link"
               = link_to "API Key", settings_path, class: "nav-link"

@@ -12,94 +12,107 @@
     %strong No API key set.
     = link_to "Add your Gumshoe API key in Settings →", settings_path, style: "margin-left: 0.5rem; font-weight: 600;"
 
-.explore-page
-  .explore-hero
-    %h1.explore-title What do you want the Gumshoe API to do?
-    %p.explore-subtitle Type a question in plain English — the app will figure out which API calls to make and show you the results.
+.test-center
+  .test-center-header
+    %h1 Test the Gumshoe API
+    %p.text-muted Pick a report, choose what you want to know, and see the live API response.
 
   = form_with url: root_path, method: :get, local: true do |f|
-    .explore-input-row
-      = f.text_field :query, value: @query,
-          placeholder: "e.g. Show rank trends for report 22110",
-          class: "explore-input",
-          autofocus: !@query.present?,
-          autocomplete: "off"
-      = f.submit "Run →", class: "btn btn-primary explore-submit"
 
-  .explore-chips
-    %span.chips-label Try:
-    %button.chip{type: "button", onclick: "setExploreQuery('Show rank trends for report 22110')"} 📈 Rank trends
-    %button.chip{type: "button", onclick: "setExploreQuery('Not mentioned for brand shipiumcom in report 22110 run 1')"} 🔍 Not mentioned
-    %button.chip{type: "button", onclick: "setExploreQuery('List my reports')"} 📋 List reports
+    .test-step
+      .test-step-label Step 1 — Select a report
+      - if @reports.any?
+        = f.select :report_id,
+            @reports.map { |r| [r["title"] || r[:title] || r["id"] || r[:id], r["id"] || r[:id]] },
+            { include_blank: "— choose a report —", selected: @report_id },
+            class: "form-select"
+      - elsif current_api_key.blank?
+        %p.text-muted Add an API key above to load your reports.
+      - else
+        %p.text-muted No reports found for this API key.
 
-- recent = (session[:query_history] || []).reject { |h| h["query"] == @query }
+    .test-step
+      .test-step-label Step 2 — What do you want to know?
+      .query-cards
+        .query-card{id: "card-trends"}
+          = f.radio_button :query_type, "trends", id: "qt_trends"
+          %label.query-card-label{for: "qt_trends"}
+            .query-card-icon 📈
+            .query-card-content
+              %strong % Results Ranked #1
+              %p How often each brand appears as the #1 AI answer across all runs — tracks visibility momentum over time
+
+        .query-card{id: "card-not_mentioned"}
+          = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned"
+          %label.query-card-label{for: "qt_not_mentioned"}
+            .query-card-icon 🔍
+            .query-card-content
+              %strong Not Mentioned
+              %p Conversations where a brand was completely absent from AI answers — surfaces competitive blind spots
+
+    #brand-key-group{style: "display: none;"}
+      .test-step
+        .test-step-label Brand key
+        %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 0.5rem;"} The brand key to check — e.g. <code>shipiumcom</code>
+        = f.text_field :brand_key, value: @brand_key, placeholder: "e.g. shipiumcom", class: "form-control", style: "max-width: 320px;"
+
+    .test-step
+      = f.submit "Run →", class: "btn btn-primary btn-lg", disabled: @reports.empty?
+
+- recent = (session[:query_history] || [])
 - if recent.any?
-  .explore-recent
+  .explore-recent{style: "margin-top: 1.5rem;"}
     %p.explore-recent-label Recent Runs:
     %ul.explore-recent-list
-      - recent.first(8).each do |h|
-        - friendly = case h["action"]
-          - when "trends"        then "% Results Ranked #1"
-          - when "not_mentioned" then "Not Mentioned"
-          - when "list_reports"  then "List Reports"
-          - when "show_report"   then "Report #{h["report_id"]}"
-          - else h["query"]
-        - detail_path = case h["action"]
-          - when "trends"        then api_query_rank_trends_path
-          - when "not_mentioned" then api_query_not_mentioned_path
-          - else root_path(query: h["query"])
+      - recent.first(5).each do |h|
+        - friendly = h["action"] == "trends" ? "% Results Ranked #1" : "Not Mentioned"
+        - detail_path = h["action"] == "trends" ? api_query_rank_trends_path : api_query_not_mentioned_path
         %li
           = link_to friendly, detail_path, class: "recent-query-link"
+          - if h["report_id"]
+            %span.recent-query-meta= "report #{h["report_id"]}#{" · #{h["brand_key"]}" if h["brand_key"].present?}"
 
-- if @query.present?
-  .explore-results
-    - if @intent && @intent[:action] != :unknown
-      .intent-badge
-        - case @intent[:action]
-        - when :trends
-          📈 Rank Trends
-          - if @intent[:report_id]
-            for report
-            %code= @intent[:report_id]
-        - when :not_mentioned
-          🔍 Not Mentioned
-          - if @intent[:brand_key]
-            · brand
-            %code= @intent[:brand_key]
-          - if @intent[:report_id]
-            · report
-            %code= @intent[:report_id]
-            · run
-            %code= @intent[:ordinal]
-        - when :list_reports
-          📋 Listing all reports
-        - when :show_report
-          📄 Report
-          %code= @intent[:report_id]
+- if @result_error
+  .alert.alert-danger{style: "margin-top: 1.5rem;"}= @result_error
+- elsif @result_type
+  .api-call-banner
+    %span.api-call-label API endpoint#{@api_endpoints.size > 1 ? "s" : ""} called:
+    - @api_endpoints.each do |ep|
+      %code.api-call-endpoint= ep
 
-    - if @result_error
-      .alert.alert-danger= @result_error
-    - elsif @result_type == :trends
-      = render "trends_result"
-    - elsif @result_type == :not_mentioned
-      = render "not_mentioned_result"
-    - elsif @result_type == :reports
-      = render "reports_result"
-    - elsif @result_type == :report
-      .card
-        .card-body
-          %pre{style: "font-size: 0.8rem; overflow-x: auto;"}= JSON.pretty_generate(@report)
-    - elsif @intent && @intent[:action] == :unknown
-      .alert{style: "background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; padding: 1rem 1.25rem;"}
-        Couldn't figure out what to do with that. Try something like:
-        %ul{style: "margin: 0.5rem 0 0 1.25rem;"}
-          %li "Show rank trends for report 22110"
-          %li "Not mentioned for brand shipiumcom in report 22110 run 1"
-          %li "List my reports"
-
+  - if @result_type == :trends
+    = render "trends_result"
+  - elsif @result_type == :not_mentioned
+    = render "not_mentioned_result"
 
 :javascript
-  function setExploreQuery(text) {
-    document.querySelector('.explore-input').value = text;
-    document.querySelector('.explore-input').focus();
-  }
+  (function() {
+    const radios = document.querySelectorAll('input[name="query_type"]');
+    const brandGroup = document.getElementById('brand-key-group');
+    const cards = document.querySelectorAll('.query-card');
+
+    function updateUI() {
+      const selected = document.querySelector('input[name="query_type"]:checked');
+      cards.forEach(c => c.classList.remove('query-card-selected'));
+      if (selected) {
+        document.getElementById('card-' + selected.value)?.classList.add('query-card-selected');
+        brandGroup.style.display = selected.value === 'not_mentioned' ? '' : 'none';
+      }
+    }
+
+    radios.forEach(r => r.addEventListener('change', updateUI));
+
+    // restore state on page load (after form submit)
+    const preselected = document.querySelector('input[name="query_type"]:checked');
+    if (preselected) updateUI();
+    else {
+      // pre-select the first radio on fresh load when a report is chosen
+      const reportSelect = document.querySelector('select[name="report_id"]');
+      if (reportSelect) reportSelect.addEventListener('change', () => {
+        if (!document.querySelector('input[name="query_type"]:checked')) {
+          document.getElementById('qt_trends').checked = true;
+          updateUI();
+        }
+      });
+    }
+  })();
