@@ -41,10 +41,7 @@
             Customer clicks the link but must enter their own API key first before seeing any data.
         .form-group{style: "margin-bottom: 0.5rem;"}
           = f.label :expires_in, "Link Expires", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
-          = f.select :expires_in,
-              [["24 hours", "1_day"], ["7 days", "7_days"], ["30 days", "30_days"], ["90 days", "90_days"], ["1 year", "1_year"], ["Never", "never"]],
-              { selected: "30_days" },
-              { class: "form-input" }
+          = f.select :expires_in, [["24 hours", "1_day"], ["7 days", "7_days"], ["30 days", "30_days"], ["90 days", "90_days"], ["1 year", "1_year"], ["Never", "never"]], { selected: "30_days" }, { class: "form-input" }
         .form-group{style: "margin-bottom: 0.5rem;"}
           = f.label :report_id, "Deep-link to Report (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
           - if @deeplink_reports.present?
@@ -54,10 +51,8 @@
             %p.text-muted{style: "font-size: 0.78rem;"} Set your API key in Settings to enable deep-linking to a specific report.
         .form-group{style: "margin-bottom: 0.5rem;", id: "query_type_group", class: params[:report_id].blank? ? "hidden" : ""}
           = f.label :query_type, "Land on Query (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
-          = f.select :query_type,
-              [["— Show report overview —", ""]] + [["% Ranked #1 Trends", "trends"], ["Not Mentioned", "not_mentioned"]] + (@custom_queries || []).map { |q| [q.name, q.query_key] },
-              { selected: params[:query_type] },
-              { class: "form-input" }
+          - query_type_options = [["— Show report overview —", ""], ["% Ranked #1 Trends", "trends"], ["Not Mentioned", "not_mentioned"]] + (@custom_queries || []).map { |q| [q.name, q.query_key] }
+          = f.select :query_type, query_type_options, { selected: params[:query_type] }, { class: "form-input" }
         = f.submit "Generate Link →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
 
   / ── Link output ─────────────────────────────────────────────
