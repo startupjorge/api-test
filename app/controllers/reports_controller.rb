@@ -64,6 +64,9 @@ class ReportsController < ApplicationController
       @brand_key = params[:brand_key].presence || @brand_key
       @ordinal   = params[:ordinal].presence || "1"
       build_not_mentioned_data(client)
+    when "prompt_explorer"
+      @brand_key = params[:brand_key].presence || @brand_key
+      build_prompt_explorer_data(client)
     else
       custom_q = @custom_queries.find { |q| q.query_key == @query_type }
       build_custom_query_data(client, custom_q) if custom_q
@@ -108,6 +111,55 @@ class ReportsController < ApplicationController
     @chart_y_label  = custom_q.y_axis_label.presence || "Value"
   rescue => e
     @error = "Error loading data: #{e.message}"
+  end
+
+  def build_prompt_explorer_data(client)
+    runs = client.get_runs(@report_id)
+    @explorer_runs = runs.sort_by { |r| (r["ordinal"] || r[:ordinal]).to_i }.reverse
+
+    ordinal = params[:ordinal].presence
+    if ordinal.blank? && @explorer_runs.any?
+      ordinal = @explorer_runs.first["ordinal"] || @explorer_runs.first[:ordinal]
+    end
+    @explorer_ordinal = ordinal.to_s
+
+    raw = client.get_raw(@report_id, @explorer_ordinal)
+
+    @prompt_rows = []
+    (raw["personas"] || []).each do |persona|
+      persona_name = persona["name"] || "Unknown"
+      (persona["questions"] || []).each do |question|
+        q_text = question["query"] || question["text"] || ""
+        topics = (question["topics"] || []).map { |t| t["name"] || t[:name] }.join(", ")
+        (question["answers"] || []).each do |answer|
+          model_name = (answer.dig("model", "name") || answer["model"] || "—").to_s
+          mentions   = answer["mentions"] || []
+          citations  = answer["citations"] || []
+
+          brand_mention   = mentions.find { |m| (m.dig("brand", "key") || "") == @brand_key }
+          brand_rank      = brand_mention ? brand_mention["rank"] : nil
+          top_competitor  = mentions.find { |m| m["rank"] == 1 && (m.dig("brand", "key") || "") != @brand_key }
+
+          @prompt_rows << {
+            question:        q_text,
+            topics:          topics,
+            persona:         persona_name,
+            model:           model_name,
+            brand_rank:      brand_rank,
+            brand_mentioned: brand_mention.present?,
+            top_competitor:  top_competitor&.dig("brand", "name"),
+            top_citation:    citations.first&.dig("domain"),
+            citation_count:  citations.size
+          }
+        end
+      end
+    end
+
+    @explorer_models   = @prompt_rows.map { |r| r[:model] }.uniq.sort
+    @explorer_personas = @prompt_rows.map { |r| r[:persona] }.uniq.sort
+  rescue => e
+    @error = "Error loading prompt explorer: #{e.message}"
+    @prompt_rows = []
   end
 
   def build_not_mentioned_data(client)

@@ -1860,3 +1860,25 @@ body.page-mode-customer {}
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+/* Prompt Explorer filter buttons */
+.filter-btn {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: all 0.15s;
+}
+.filter-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.filter-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
