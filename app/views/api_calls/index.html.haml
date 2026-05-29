@@ -1,0 +1,27 @@
+- content_for :title, "API Calls · Gumshoe"
+
+.page-header
+  %h1 API Calls
+  %p.text-muted The Gumshoe API calls available to run on your reports
+
+.feature-grid
+  .feature-card
+    .feature-card-icon 📈
+    %h3 % Results Ranked #1
+    %p How often each brand appears as the #1 AI answer across every run of a report — track momentum over time.
+    .feature-card-actions
+      = link_to "Pick a Report →", reports_path, class: "btn btn-primary btn-sm"
+
+  .feature-card
+    .feature-card-icon 🔍
+    %h3 Not Mentioned
+    %p Every AI conversation where a specific brand was completely absent — your competitive gap finder.
+    .feature-card-actions
+      = link_to "Pick a Report →", reports_path, class: "btn btn-primary btn-sm"
+
+  .feature-card
+    .feature-card-icon 💬
+    %h3 Natural Language Query
+    %p Ask the Gumshoe API anything in plain English — it figures out which call to make.
+    .feature-card-actions
+      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"

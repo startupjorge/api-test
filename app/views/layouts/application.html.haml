@@ -20,10 +20,12 @@
           = image_tag "gumshoe-logo-white.svg", alt: "Gumshoe", style: "height: 28px; width: auto;"
         .nav-right
           .nav-internal
-            = link_to "Reports", reports_path, class: "nav-link"
-            = link_to "Explore", explore_internal_path, class: "nav-link"
+            = link_to "Explore Gumshoe API", explore_internal_path, class: "nav-link"
+            = link_to "My Reports", reports_path, class: "nav-link"
+            = link_to "API Calls", api_calls_path, class: "nav-link"
+            = link_to "API Key", settings_path, class: "nav-link"
             - if employee?
-              = link_to "⚙ Settings", settings_path, class: "nav-link"
+              = link_to "Invite", invite_path, class: "nav-link"
           - if logged_in?
             .nav-divider
             %span.nav-employee= (current_employee || current_customer).split('@').first.capitalize
