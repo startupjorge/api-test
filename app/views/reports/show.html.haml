@@ -68,11 +68,44 @@
 
 - if @query_type == "trends" && @chart_datasets.present?
   .result-panel{style: "margin-top: 2rem;"}
-    .result-panel-header
-      %span.result-panel-title 📈 % Results Ranked #1
-      %span.result-panel-sub Computed from API response
+    .result-panel-header{style: "display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;"}
+      .result-panel-title-group{style: "display: flex; align-items: center; gap: 0.75rem;"}
+        %span.result-panel-title 📈 % Results Ranked #1
+        %span.result-panel-sub Computed from API response
+      .panel-tabs{style: "display: flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;"}
+        %button.panel-tab.active{onclick: "switchTab('panel-trends', 'results', this)"} Results
+        %button.panel-tab{onclick: "switchTab('panel-trends', 'api', this)"} 🔌 How to call this API
     .result-panel-body
-      %canvas#reportTrendsChart{style: "width: 100%; height: 400px;"}
+      #panel-trends-results
+        %canvas#reportTrendsChart{style: "width: 100%; height: 400px;"}
+      #panel-trends-api{style: "display: none;"}
+        .api-how-to-body
+          .api-how-to-header{style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;"}
+            %p.api-how-to-intro{style: "margin: 0;"} This chart is built by fetching all runs for a report, then pulling the raw results for each run and computing the % of conversations where each brand was ranked #1.
+            %button.btn.btn-secondary.btn-sm{onclick: "copyApiInstructions('panel-trends-api', this)", style: "flex-shrink: 0; margin-left: 1rem;"} 📋 Copy Instructions
+          .api-how-to-steps
+            .api-how-to-step
+              %span.step-num 1
+              .step-content
+                %strong List runs for a report
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs
+                - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
+                - if runs_call
+                  %pre.api-curl= runs_call[:curl]
+            .api-how-to-step
+              %span.step-num 2
+              .step-content
+                %strong Fetch raw results for each run
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal/raw
+                - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
+                - if raw_call
+                  %pre.api-curl= raw_call[:curl]
+            .api-how-to-step
+              %span.step-num 3
+              .step-content
+                %strong Compute % Ranked #1
+                %p.text-muted For each answer in the raw response, check #{"`"}mentions[].rank == 1#{"`"} and tally by brand key. Divide by total answers to get the percentage.
+          = link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", style: "font-size: 0.82rem; color: #2563eb; margin-top: 1rem; display: inline-block;"
   :javascript
     (function() {
       const rawLabels = #{@chart_labels.to_json};
@@ -115,117 +148,191 @@
 
 - elsif @query_type == "not_mentioned"
   .result-panel{style: "margin-top: 2rem;"}
-    .result-panel-header
-      %span.result-panel-title 🔍 Not Mentioned
-      %span.result-panel-sub Conversations where #{@brand_key} was absent
+    .result-panel-header{style: "display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;"}
+      .result-panel-title-group{style: "display: flex; align-items: center; gap: 0.75rem;"}
+        %span.result-panel-title 🔍 Not Mentioned
+        %span.result-panel-sub Conversations where #{@brand_key} was absent
+      .panel-tabs{style: "display: flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;"}
+        %button.panel-tab.active{onclick: "switchTab('panel-not-mentioned', 'results', this)"} Results
+        %button.panel-tab{onclick: "switchTab('panel-not-mentioned', 'api', this)"} 🔌 How to call this API
     .result-panel-body
-      - if @total_answers.to_i > 0
-        .stats-row{style: "margin-bottom: 1.5rem;"}
-          .stat-card
-            .stat-number{style: "color: #dc2626;"}= @not_mentioned.size
-            .stat-label Not Mentioned
-          .stat-card
-            .stat-number{style: "color: #dc2626;"}= "#{@total_answers > 0 ? (@not_mentioned.size.to_f / @total_answers * 100).round(1) : 0}%"
-            .stat-label of Conversations
-          .stat-card
-            .stat-number{style: "color: #059669;"}= @total_answers - @not_mentioned.size
-            .stat-label Was Mentioned
-        - if @not_mentioned.any?
-          - @not_mentioned.each do |answer|
-            .answer-card
-              .meta
-                %span
-                  %strong Persona:
-                  = answer[:persona_name]
-                %span
-                  %strong Model:
-                  = answer[:model].presence || "—"
-              .question= answer[:question_text]
-              .answer-text= answer[:answer_text]
+      #panel-not-mentioned-results
+        - if @total_answers.to_i > 0
+          .stats-row{style: "margin-bottom: 1.5rem;"}
+            .stat-card
+              .stat-number{style: "color: #dc2626;"}= @not_mentioned.size
+              .stat-label Not Mentioned
+            .stat-card
+              .stat-number{style: "color: #dc2626;"}= "#{@total_answers > 0 ? (@not_mentioned.size.to_f / @total_answers * 100).round(1) : 0}%"
+              .stat-label of Conversations
+            .stat-card
+              .stat-number{style: "color: #059669;"}= @total_answers - @not_mentioned.size
+              .stat-label Was Mentioned
+          - if @not_mentioned.any?
+            - @not_mentioned.each do |answer|
+              .answer-card
+                .meta
+                  %span
+                    %strong Persona:
+                    = answer[:persona_name]
+                  %span
+                    %strong Model:
+                    = answer[:model].presence || "—"
+                .question= answer[:question_text]
+                .answer-text= answer[:answer_text]
+          - else
+            %p.text-muted #{@brand_key} appeared in every conversation in this run.
         - else
-          %p.text-muted #{@brand_key} appeared in every conversation in this run.
-      - else
-        %p.text-muted No data found.
+          %p.text-muted No data found.
+      #panel-not-mentioned-api{style: "display: none;"}
+        .api-how-to-body
+          .api-how-to-header{style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;"}
+            %p.api-how-to-intro{style: "margin: 0;"} Not Mentioned is computed from the raw run results. Any conversation where your brand key does not appear in #{"`"}mentions[].brand.key#{"`"} is counted as not mentioned.
+            %button.btn.btn-secondary.btn-sm{onclick: "copyApiInstructions('panel-not-mentioned-api', this)", style: "flex-shrink: 0; margin-left: 1rem;"} 📋 Copy Instructions
+          .api-how-to-steps
+            .api-how-to-step
+              %span.step-num 1
+              .step-content
+                %strong Fetch raw results for a run
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs/#{@ordinal}/raw
+                - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
+                - if raw_call
+                  %pre.api-curl= raw_call[:curl]
+            .api-how-to-step
+              %span.step-num 2
+              .step-content
+                %strong Filter for not mentioned
+                %p.text-muted For each answer, check whether #{"`"}mentions[].brand.key#{"`"} contains #{"`"}#{@brand_key}#{"`"}. If absent, that conversation was not mentioned.
+            .api-how-to-step
+              %span.step-num 3
+              .step-content
+                %strong Example filter logic
+                %pre.api-curl
+                  :preserve
+                    not_mentioned = answers.reject do |answer|
+                      answer["mentions"].any? do |m|
+                        m.dig("brand", "key") == "#{@brand_key}"
+                      end
+                    end
+          = link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", style: "font-size: 0.82rem; color: #2563eb; margin-top: 1rem; display: inline-block;"
 
 - if @query_type == "prompt_explorer"
   .result-panel{style: "margin-top: 2rem;"}
-    .result-panel-header
-      %span.result-panel-title 🧵 Prompt Explorer
-      - if @explorer_runs.present?
-        %span.result-panel-sub{style: "display: flex; align-items: center; gap: 0.5rem;"}
-          Run:
-          = form_with url: report_path(@report_id), method: :get, local: true, style: "display: inline;" do |rf|
-            = rf.hidden_field :query_type, value: "prompt_explorer"
-            = rf.hidden_field :brand_key,  value: @brand_key
-            = rf.select :ordinal,
-                @explorer_runs.map { |r| ["Run ##{r["ordinal"] || r[:ordinal]} — #{((r["createdAt"] || r[:created_at]).to_s[0,10] rescue r["ordinal"])}", r["ordinal"] || r[:ordinal]] },
-                { selected: @explorer_ordinal },
-                { class: "form-input", style: "font-size: 0.8rem; padding: 0.2rem 0.5rem; display: inline; width: auto;", onchange: "this.form.submit()" }
+    .result-panel-header{style: "display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;"}
+      .result-panel-title-group{style: "display: flex; align-items: center; gap: 0.75rem;"}
+        %span.result-panel-title 🧵 Prompt Explorer
+        - if @explorer_runs.present?
+          %span.result-panel-sub{style: "display: flex; align-items: center; gap: 0.5rem;"}
+            Run:
+            = form_with url: report_path(@report_id), method: :get, local: true, style: "display: inline;" do |rf|
+              = rf.hidden_field :query_type, value: "prompt_explorer"
+              = rf.hidden_field :brand_key,  value: @brand_key
+              = rf.select :ordinal,
+                  @explorer_runs.map { |r| ["Run ##{r["ordinal"] || r[:ordinal]} — #{((r["createdAt"] || r[:created_at]).to_s[0,10] rescue r["ordinal"])}", r["ordinal"] || r[:ordinal]] },
+                  { selected: @explorer_ordinal },
+                  { class: "form-input", style: "font-size: 0.8rem; padding: 0.2rem 0.5rem; display: inline; width: auto;", onchange: "this.form.submit()" }
+      .panel-tabs{style: "display: flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;"}
+        %button.panel-tab.active{onclick: "switchTab('panel-prompt-explorer', 'results', this)"} Results
+        %button.panel-tab{onclick: "switchTab('panel-prompt-explorer', 'api', this)"} 🔌 How to call this API
     .result-panel-body
-      - if @prompt_rows.present?
-        - mentioned_count   = @prompt_rows.count { |r| r[:brand_mentioned] }
-        - unmentioned_count = @prompt_rows.count { |r| !r[:brand_mentioned] }
-        .stats-row{style: "margin-bottom: 1.5rem;"}
-          .stat-card
-            .stat-number= @prompt_rows.size
-            .stat-label Total Prompts
-          .stat-card
-            .stat-number{style: "color: #059669;"}= mentioned_count
-            .stat-label Mentioned
-          .stat-card
-            .stat-number{style: "color: #dc2626;"}= unmentioned_count
-            .stat-label Not Mentioned
-          .stat-card
-            .stat-number{style: "color: #059669;"}= "#{@prompt_rows.size > 0 ? (mentioned_count.to_f / @prompt_rows.size * 100).round(1) : 0}%"
-            .stat-label Mention Rate
+      #panel-prompt-explorer-results
+        - if @prompt_rows.present?
+          - mentioned_count   = @prompt_rows.count { |r| r[:brand_mentioned] }
+          - unmentioned_count = @prompt_rows.count { |r| !r[:brand_mentioned] }
+          .stats-row{style: "margin-bottom: 1.5rem;"}
+            .stat-card
+              .stat-number= @prompt_rows.size
+              .stat-label Total Prompts
+            .stat-card
+              .stat-number{style: "color: #059669;"}= mentioned_count
+              .stat-label Mentioned
+            .stat-card
+              .stat-number{style: "color: #dc2626;"}= unmentioned_count
+              .stat-label Not Mentioned
+            .stat-card
+              .stat-number{style: "color: #059669;"}= "#{@prompt_rows.size > 0 ? (mentioned_count.to_f / @prompt_rows.size * 100).round(1) : 0}%"
+              .stat-label Mention Rate
 
-        / Filter bar
-        .filter-bar{style: "display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; align-items: center;"}
-          %span{style: "font-size: 0.8rem; font-weight: 600; color: #64748b;"} Filter:
-          %button.filter-btn.active{type: "button", onclick: "filterPrompts('all', this)",        style: "font-size: 0.78rem;"} All
-          %button.filter-btn{type: "button",        onclick: "filterPrompts('mentioned', this)",  style: "font-size: 0.78rem;"} Mentioned
-          %button.filter-btn{type: "button",        onclick: "filterPrompts('not_mentioned', this)", style: "font-size: 0.78rem;"} Not Mentioned
-          - if @explorer_models.size > 1
-            %span{style: "margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;"} Model:
-            - @explorer_models.each do |model|
-              %button.filter-btn.model-filter{type: "button", "data-model": model, onclick: "filterModel(this)", style: "font-size: 0.78rem;"}= model.split("-").first(3).join("-")
-          - if @explorer_personas.size > 1
-            %span{style: "margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;"} Persona:
-            - @explorer_personas.each do |persona|
-              %button.filter-btn.persona-filter{type: "button", "data-persona": persona, onclick: "filterPersona(this)", style: "font-size: 0.78rem;"}= persona
+          / Filter bar
+          .filter-bar{style: "display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; align-items: center;"}
+            %span{style: "font-size: 0.8rem; font-weight: 600; color: #64748b;"} Filter:
+            %button.filter-btn.active{type: "button", onclick: "filterPrompts('all', this)",        style: "font-size: 0.78rem;"} All
+            %button.filter-btn{type: "button",        onclick: "filterPrompts('mentioned', this)",  style: "font-size: 0.78rem;"} Mentioned
+            %button.filter-btn{type: "button",        onclick: "filterPrompts('not_mentioned', this)", style: "font-size: 0.78rem;"} Not Mentioned
+            - if @explorer_models.size > 1
+              %span{style: "margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;"} Model:
+              - @explorer_models.each do |model|
+                %button.filter-btn.model-filter{type: "button", "data-model": model, onclick: "filterModel(this)", style: "font-size: 0.78rem;"}= model.split("-").first(3).join("-")
+            - if @explorer_personas.size > 1
+              %span{style: "margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;"} Persona:
+              - @explorer_personas.each do |persona|
+                %button.filter-btn.persona-filter{type: "button", "data-persona": persona, onclick: "filterPersona(this)", style: "font-size: 0.78rem;"}= persona
 
-        / Table
-        .table-scroll{style: "overflow-x: auto;"}
-          %table.prompt-table{style: "width: 100%; border-collapse: collapse; font-size: 0.82rem;"}
-            %thead
-              %tr
-                %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Question
-                %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Persona
-                %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Model
-                %th{style: "text-align: center; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Brand Rank
-                %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Top Competitor
-                %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Top Citation
-            %tbody#promptTableBody
-              - @prompt_rows.each_with_index do |row, i|
-                %tr.prompt-row{"data-mentioned": row[:brand_mentioned].to_s, "data-model": row[:model], "data-persona": row[:persona], style: "background: #{i.even? ? '#fff' : '#f8fafc'};"}
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; max-width: 380px; line-height: 1.5;"}= row[:question]
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; color: #475569;"}= row[:persona]
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; font-family: monospace; font-size: 0.75rem; color: #64748b;"}= row[:model]
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; text-align: center;"}
-                    - if row[:brand_rank]
-                      %span{style: "display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 700; font-size: 0.78rem; background: #{row[:brand_rank] == 1 ? '#dcfce7' : '#fef9c3'}; color: #{row[:brand_rank] == 1 ? '#166534' : '#854d0e'};"}= "##{row[:brand_rank]}"
-                    - else
-                      %span{style: "display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; background: #fee2e2; color: #991b1b; font-weight: 600;"} —
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; color: #475569;"}= row[:top_competitor] || "—"
-                  %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.78rem;"}
-                    - if row[:top_citation]
-                      = row[:top_citation]
-                      - if row[:citation_count] > 1
-                        %span{style: "color: #94a3b8;"} +#{row[:citation_count] - 1}
-                    - else
-                      —
-      - else
-        %p.text-muted No prompt data found for this run.
+          / Table
+          .table-scroll{style: "overflow-x: auto;"}
+            %table.prompt-table{style: "width: 100%; border-collapse: collapse; font-size: 0.82rem;"}
+              %thead
+                %tr
+                  %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Question
+                  %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Persona
+                  %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Model
+                  %th{style: "text-align: center; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Brand Rank
+                  %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Top Competitor
+                  %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;"} Top Citation
+              %tbody#promptTableBody
+                - @prompt_rows.each_with_index do |row, i|
+                  %tr.prompt-row{"data-mentioned": row[:brand_mentioned].to_s, "data-model": row[:model], "data-persona": row[:persona], style: "background: #{i.even? ? '#fff' : '#f8fafc'};"}
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; max-width: 380px; line-height: 1.5;"}= row[:question]
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; color: #475569;"}= row[:persona]
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; font-family: monospace; font-size: 0.75rem; color: #64748b;"}= row[:model]
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; text-align: center;"}
+                      - if row[:brand_rank]
+                        %span{style: "display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 700; font-size: 0.78rem; background: #{row[:brand_rank] == 1 ? '#dcfce7' : '#fef9c3'}; color: #{row[:brand_rank] == 1 ? '#166534' : '#854d0e'};"}= "##{row[:brand_rank]}"
+                      - else
+                        %span{style: "display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; background: #fee2e2; color: #991b1b; font-weight: 600;"} —
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap; color: #475569;"}= row[:top_competitor] || "—"
+                    %td{style: "padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.78rem;"}
+                      - if row[:top_citation]
+                        = row[:top_citation]
+                        - if row[:citation_count] > 1
+                          %span{style: "color: #94a3b8;"} +#{row[:citation_count] - 1}
+                      - else
+                        —
+        - else
+          %p.text-muted No prompt data found for this run.
+      #panel-prompt-explorer-api{style: "display: none;"}
+        .api-how-to-body
+          .api-how-to-header{style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;"}
+            %p.api-how-to-intro{style: "margin: 0;"} Prompt Explorer pulls the full raw results for a single run — every question, every AI answer, every brand mention and citation.
+            %button.btn.btn-secondary.btn-sm{onclick: "copyApiInstructions('panel-prompt-explorer-api', this)", style: "flex-shrink: 0; margin-left: 1rem;"} 📋 Copy Instructions
+          .api-how-to-steps
+            .api-how-to-step
+              %span.step-num 1
+              .step-content
+                %strong Fetch raw results for a run
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs/#{@explorer_ordinal}/raw
+                - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
+                - if raw_call
+                  %pre.api-curl= raw_call[:curl]
+            .api-how-to-step
+              %span.step-num 2
+              .step-content
+                %strong Walk the response tree
+                %pre.api-curl
+                  :preserve
+                    personas[].questions[].answers[].mentions[]
+                    # Each mention has: rank, brand.key, brand.name, reason
+                    # Each answer has:  model.name, citations[].domain
+            .api-how-to-step
+              %span.step-num 3
+              .step-content
+                %strong Check if brand was mentioned
+                %pre.api-curl
+                  :preserve
+                    mentioned = answer["mentions"].any? do |m|
+                      m.dig("brand", "key") == "#{@brand_key}"
+                    end
+          = link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", style: "font-size: 0.82rem; color: #2563eb; margin-top: 1rem; display: inline-block;"
 
   :javascript
     (function() {
@@ -280,11 +387,54 @@
 
 - if @active_custom_query && @chart_datasets.present?
   .result-panel{style: "margin-top: 2rem;"}
-    .result-panel-header
-      %span.result-panel-title= "#{@active_custom_query.icon} #{@active_custom_query.name}"
-      %span.result-panel-sub= @active_custom_query.description
+    .result-panel-header{style: "display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;"}
+      .result-panel-title-group{style: "display: flex; align-items: center; gap: 0.75rem;"}
+        %span.result-panel-title= "#{@active_custom_query.icon} #{@active_custom_query.name}"
+        %span.result-panel-sub= @active_custom_query.description
+      .panel-tabs{style: "display: flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;"}
+        %button.panel-tab.active{onclick: "switchTab('panel-custom-query', 'results', this)"} Results
+        %button.panel-tab{onclick: "switchTab('panel-custom-query', 'api', this)"} 🔌 How to call this API
     .result-panel-body
-      %canvas#customQueryChart{style: "width: 100%; height: 400px;"}
+      #panel-custom-query-results
+        %canvas#customQueryChart{style: "width: 100%; height: 400px;"}
+      #panel-custom-query-api{style: "display: none;"}
+        .api-how-to-body
+          .api-how-to-header{style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;"}
+            %p.api-how-to-intro{style: "margin: 0;"}
+              This chart plots
+              %code= @active_custom_query.value_path
+              from each run's response over time.
+            %button.btn.btn-secondary.btn-sm{onclick: "copyApiInstructions('panel-custom-query-api', this)", style: "flex-shrink: 0; margin-left: 1rem;"} 📋 Copy Instructions
+          .api-how-to-steps
+            .api-how-to-step
+              %span.step-num 1
+              .step-content
+                %strong List all runs for this report
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs
+                - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
+                - if runs_call
+                  %pre.api-curl= runs_call[:curl]
+            .api-how-to-step
+              %span.step-num 2
+              .step-content
+                %strong Fetch the scored result for each run
+                %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal
+                - run_call = @api_calls&.find { |c| c[:url].to_s.match?(%r{/runs/\d+$}) }
+                - if run_call
+                  %pre.api-curl= run_call[:curl]
+            .api-how-to-step
+              %span.step-num 3
+              .step-content
+                %strong Extract the value
+                %p.text-muted Dig into the response using the path:
+                %pre.api-curl
+                  :preserve
+                    #{@active_custom_query.value_path}
+                %p.text-muted In Ruby:
+                %pre.api-curl
+                  :preserve
+                    data.dig(#{@active_custom_query.value_path.split('.').map { |k| "\"#{k}\"" }.join(', ')})
+          = link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", style: "font-size: 0.82rem; color: #2563eb; margin-top: 1rem; display: inline-block;"
   :javascript
     (function() {
       const rawLabels = #{@chart_labels.to_json};
@@ -321,129 +471,42 @@
       });
     })();
 
-- if @query_type.present?
-  %details.api-how-to{style: "margin-top: 2rem;", open: true}
-    %summary.api-how-to-toggle
-      %span 🔌 How to call this API
-      %span.api-how-to-docs-link= link_to "Full API docs →", "https://app.gumshoe.ai/openapi", target: "_blank", onclick: "event.stopPropagation();"
-    .api-how-to-body
-      - if @query_type == "trends"
-        %p.api-how-to-intro
-          This chart is built by fetching all runs for a report, then pulling the raw results for each run and computing the % of conversations where each brand was ranked #1.
-        .api-how-to-steps
-          .api-how-to-step
-            %span.step-num 1
-            .step-content
-              %strong List runs for a report
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs
-              - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
-              - if runs_call
-                %pre.api-curl= runs_call[:curl]
-          .api-how-to-step
-            %span.step-num 2
-            .step-content
-              %strong Fetch raw results for each run
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal/raw
-              - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
-              - if raw_call
-                %pre.api-curl= raw_call[:curl]
-          .api-how-to-step
-            %span.step-num 3
-            .step-content
-              %strong Compute % Ranked #1
-              %p.text-muted For each answer in the raw response, check #{"`"}mentions[].rank == 1#{"`"} and tally by brand key. Divide by total answers to get the percentage.
-      - elsif @query_type == "prompt_explorer"
-        %p.api-how-to-intro
-          Prompt Explorer pulls the full raw results for a single run — every question, every AI answer, every brand mention and citation.
-        .api-how-to-steps
-          .api-how-to-step
-            %span.step-num 1
-            .step-content
-              %strong Fetch raw results for a run
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/#{@explorer_ordinal}/raw
-              - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
-              - if raw_call
-                %pre.api-curl= raw_call[:curl]
-          .api-how-to-step
-            %span.step-num 2
-            .step-content
-              %strong Walk the response tree
-              %pre.api-curl
-                :preserve
-                  personas[].questions[].answers[].mentions[]
-                  # Each mention has: rank, brand.key, brand.name, reason
-                  # Each answer has:  model.name, citations[].domain
-          .api-how-to-step
-            %span.step-num 3
-            .step-content
-              %strong Check if brand was mentioned
-              %pre.api-curl
-                :preserve
-                  mentioned = answer["mentions"].any? do |m|
-                    m.dig("brand", "key") == "#{@brand_key}"
-                  end
-      - elsif @query_type == "not_mentioned"
-        %p.api-how-to-intro
-          Not Mentioned is computed from the raw run results. Any conversation where your brand key does not appear in #{"`"}mentions[].brand.key#{"`"} is counted as not mentioned.
-        .api-how-to-steps
-          .api-how-to-step
-            %span.step-num 1
-            .step-content
-              %strong Fetch raw results for a run
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/#{@ordinal}/raw
-              - raw_call = @api_calls&.find { |c| c[:url].to_s.include?("/raw") }
-              - if raw_call
-                %pre.api-curl= raw_call[:curl]
-          .api-how-to-step
-            %span.step-num 2
-            .step-content
-              %strong Filter for not mentioned
-              %p.text-muted For each answer, check whether #{"`"}mentions[].brand.key#{"`"} contains #{"`"}#{@brand_key}#{"`"}. If absent, that conversation was not mentioned.
-          .api-how-to-step
-            %span.step-num 3
-            .step-content
-              %strong Example filter logic
-              %pre.api-curl
-                :preserve
-                  not_mentioned = answers.reject do |answer|
-                    answer["mentions"].any? do |m|
-                      m.dig("brand", "key") == "#{@brand_key}"
-                    end
-                  end
-      - elsif @active_custom_query
-        %p.api-how-to-intro
-          This chart plots #{"`"}#{@active_custom_query.value_path}#{"`"} from each run's response over time.
-        .api-how-to-steps
-          .api-how-to-step
-            %span.step-num 1
-            .step-content
-              %strong List all runs for this report
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs
-              - runs_call = @api_calls&.find { |c| c[:url].to_s.include?("/runs") && !c[:url].to_s.match?(%r{/runs/\d}) }
-              - if runs_call
-                %pre.api-curl= runs_call[:curl]
-          .api-how-to-step
-            %span.step-num 2
-            .step-content
-              %strong Fetch the scored result for each run
-              %code.api-endpoint GET /v1/reports/#{@report_id}/runs/:ordinal
-              - run_call = @api_calls&.find { |c| c[:url].to_s.match?(%r{/runs/\d+$}) }
-              - if run_call
-                %pre.api-curl= run_call[:curl]
-          .api-how-to-step
-            %span.step-num 3
-            .step-content
-              %strong Extract the value
-              %p.text-muted Dig into the response using the path:
-              %pre.api-curl
-                :preserve
-                  #{@active_custom_query.value_path}
-              %p.text-muted In Ruby:
-              %pre.api-curl
-                :preserve
-                  data.dig(#{@active_custom_query.value_path.split('.').map { |k| "\"#{k}\"" }.join(', ')})
 :javascript
   (function() {
+    // Panel tab switcher
+    window.switchTab = function(panelId, tab, btn) {
+      var resultsPane = document.getElementById(panelId + '-results');
+      var apiPane     = document.getElementById(panelId + '-api');
+      if (!resultsPane || !apiPane) return;
+      var tabs = btn.closest('.panel-tabs').querySelectorAll('.panel-tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      btn.classList.add('active');
+      resultsPane.style.display = (tab === 'results') ? '' : 'none';
+      apiPane.style.display     = (tab === 'api') ? '' : 'none';
+    };
+
+    // Copy all text content from the API instructions pane
+    window.copyApiInstructions = function(panelId, btn) {
+      var pane = document.getElementById(panelId);
+      if (!pane) return;
+      var text = [];
+      pane.querySelectorAll('.api-how-to-intro, .api-how-to-step strong, .api-how-to-step .api-endpoint, .api-how-to-step pre, .api-how-to-step .text-muted').forEach(function(el) {
+        var t = el.textContent.trim();
+        if (t) text.push(t);
+      });
+      navigator.clipboard.writeText(text.join('\n\n')).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 2000);
+      });
+    };
+
+    // Panel tab styles
+    var style = document.createElement('style');
+    style.textContent = '.panel-tab { padding: 0.3rem 0.85rem; font-size: 0.8rem; font-weight: 500; background: #fff; color: #374151; border: none; cursor: pointer; transition: background 0.15s; } .panel-tab:hover { background: #f1f5f9; } .panel-tab.active { background: #2563eb; color: #fff; }';
+    document.head.appendChild(style);
+
+    // Radio/brand-key UI
     const radios = document.querySelectorAll('input[name="query_type"]');
     const brandGroup = document.getElementById('brand-key-group');
 
