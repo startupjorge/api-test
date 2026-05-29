@@ -17,6 +17,10 @@ class GumshoeClient
 
   attr_reader :api_calls
 
+  def curl_command
+    @api_calls.last&.dig(:curl)
+  end
+
   def reports(query = {})
     make_request(GumshoeApiUrls.reports_url, query)
   end
