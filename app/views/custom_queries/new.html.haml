@@ -25,18 +25,9 @@
         .qb-step-num 2
         %strong Pick a field to chart
       .qb-step-body
-        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 0.5rem;"}
-          These are all the numeric fields found in this report's latest run — pulled live from the API.
-          %strong Click one to chart it over time.
-        %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 1rem; line-height: 1.6;"}
-          %strong{style: "color: #1e293b;"} Good picks:
-          %code{style: "background: #f1f5f9; padding: 1px 5px; border-radius: 3px;"} visibility.overall.visibilityScore
-          (overall brand visibility ratio),
-          %code{style: "background: #f1f5f9; padding: 1px 5px; border-radius: 3px;"} scores.overallScore
-          (composite score, if available).
-          %br
-          %strong{style: "color: #94a3b8;"} Skip:
-          Numerator, Denominator, Total Prompts — these are raw counts, not meaningful as a trend line.
+        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 1rem;"}
+          Fields pulled live from this report's latest run.
+          %strong Start with a ⭐ Recommended field — click it to select.
         #qb-field-list{style: "display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem;"}
 
         %details{style: "margin-top: 1.25rem;"}
@@ -167,6 +158,36 @@
     });
   }
 
+  // ── Field catalog: plain-English names + descriptions ────────
+  var FIELD_CATALOG = {
+    'visibility.overall.visibilityScore':    { label: 'Overall Visibility Score',      desc: 'Main brand visibility metric — % of AI answers that mention your brand. Start here.', star: true },
+    'visibility.overall.numerator':          { label: 'Mentions (count)',               desc: 'Raw count of answers where your brand was mentioned. Use Visibility Score instead.', skip: true },
+    'visibility.overall.denominator':        { label: 'Total Prompts Evaluated',        desc: 'Total answers analyzed. Not useful as a trend line.', skip: true },
+    'scores.overallScore':                   { label: 'Overall Score',                  desc: 'Composite score across all SEO/AI optimization dimensions.', star: true },
+    'scores.navigationScore':               { label: 'Navigation Score',               desc: 'How easily AI can crawl and understand your site structure.' },
+    'scores.contentBalanceScore':           { label: 'Content Balance Score',          desc: 'Balance of informational vs. promotional content.' },
+    'scores.metadataScore':                 { label: 'Metadata Score',                 desc: 'Quality of title tags, meta descriptions, and structured metadata.' },
+    'scores.pageLayoutStructureScore':      { label: 'Page Layout & Structure Score',  desc: 'Clarity of page hierarchy and visual layout signals.' },
+    'scores.schemaMarkupScore':             { label: 'Schema Markup Score',            desc: 'Presence and correctness of schema.org markup.' },
+    'scores.structuredDataAssessmentScore': { label: 'Structured Data Score',          desc: 'Overall structured data health across the site.' },
+    'sample.totalPrompts':                  { label: 'Total Prompts',                  desc: 'Number of questions evaluated. Not useful as a trend line.', skip: true },
+    'sourcesTop.totals.totalSources':       { label: 'Total Sources Cited',            desc: 'How many unique sources were cited across all answers.' },
+  };
+
+  function catalogFor(path) {
+    // Exact match
+    if (FIELD_CATALOG[path]) return FIELD_CATALOG[path];
+    // Fuzzy: strip array indices and try again
+    var stripped = path.replace(/\[\d+\]/g, '[0]');
+    if (FIELD_CATALOG[stripped]) return FIELD_CATALOG[stripped];
+    // Match by suffix key
+    var key = path.split('.').pop();
+    for (var p in FIELD_CATALOG) {
+      if (p.endsWith('.' + key)) return FIELD_CATALOG[p];
+    }
+    return null;
+  }
+
   // ── Render clean field cards ──────────────────────────────────
   function renderFieldList(fields) {
     var container = document.getElementById('qb-field-list');
@@ -177,30 +198,73 @@
       return;
     }
 
+    // Group: starred → regular → skip
+    var starred = [], regular = [], skippable = [];
     fields.forEach(function(f) {
-      var card = document.createElement('div');
-      card.style.cssText = 'border:1px solid #e2e8f0; border-radius:8px; padding:0.875rem 1rem; cursor:pointer; background:#fff; transition: all 0.15s;';
-      card.onmouseover = function() { this.style.borderColor='#2563eb'; this.style.background='#eff6ff'; };
-      card.onmouseout  = function() { this.style.borderColor='#e2e8f0'; this.style.background='#fff'; };
-      card.onclick     = function() { qbSelectField(f.path, f.value); };
-
-      var name = document.createElement('div');
-      name.style.cssText = 'font-weight:600; font-size:0.9rem; color:#1e293b; margin-bottom:0.25rem;';
-      name.textContent = humanize(f.key);
-
-      var path = document.createElement('div');
-      path.style.cssText = 'font-family:monospace; font-size:0.75rem; color:#64748b; margin-bottom:0.4rem;';
-      path.textContent = f.path;
-
-      var value = document.createElement('div');
-      value.style.cssText = 'font-size:1.1rem; font-weight:700; color:#2563eb;';
-      value.textContent = f.value;
-
-      card.appendChild(name);
-      card.appendChild(path);
-      card.appendChild(value);
-      container.appendChild(card);
+      var cat = catalogFor(f.path);
+      if (cat && cat.star)  starred.push({ f: f, cat: cat });
+      else if (cat && cat.skip) skippable.push({ f: f, cat: cat });
+      else regular.push({ f: f, cat: cat });
     });
+
+    function renderGroup(items, groupLabel, groupStyle) {
+      if (items.length === 0) return;
+      var heading = document.createElement('div');
+      heading.style.cssText = 'grid-column: 1/-1; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-top:0.5rem; ' + (groupStyle || 'color:#64748b;');
+      heading.textContent = groupLabel;
+      container.appendChild(heading);
+
+      items.forEach(function(item) {
+        var f   = item.f;
+        var cat = item.cat;
+        var isSkip = cat && cat.skip;
+
+        var card = document.createElement('div');
+        card.style.cssText = 'border:1px solid ' + (cat && cat.star ? '#bbf7d0' : '#e2e8f0') + '; border-radius:8px; padding:0.875rem 1rem; cursor:pointer; background:' + (cat && cat.star ? '#f0fdf4' : '#fff') + '; transition:all 0.15s; opacity:' + (isSkip ? '0.55' : '1') + ';';
+        if (!isSkip) {
+          card.onmouseover = function() { this.style.borderColor='#2563eb'; this.style.background='#eff6ff'; };
+          card.onmouseout  = function() { this.style.borderColor = (cat && cat.star ? '#bbf7d0' : '#e2e8f0'); this.style.background = (cat && cat.star ? '#f0fdf4' : '#fff'); };
+        }
+        card.onclick = function() { if (!isSkip) qbSelectField(f.path, f.value); };
+
+        var topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex; align-items:center; gap:0.4rem; margin-bottom:0.2rem;';
+
+        if (cat && cat.star) {
+          var star = document.createElement('span');
+          star.textContent = '⭐';
+          star.style.fontSize = '0.8rem';
+          topRow.appendChild(star);
+        }
+
+        var nameEl = document.createElement('span');
+        nameEl.style.cssText = 'font-weight:700; font-size:0.9rem; color:#1e293b;';
+        nameEl.textContent = (cat && cat.label) ? cat.label : humanize(f.key);
+        topRow.appendChild(nameEl);
+
+        var descEl = document.createElement('div');
+        descEl.style.cssText = 'font-size:0.78rem; color:#64748b; margin-bottom:0.5rem; line-height:1.5;';
+        descEl.textContent = (cat && cat.desc) ? cat.desc : '';
+
+        var pathEl = document.createElement('div');
+        pathEl.style.cssText = 'font-family:monospace; font-size:0.72rem; color:#94a3b8; margin-bottom:0.4rem;';
+        pathEl.textContent = f.path;
+
+        var valueEl = document.createElement('div');
+        valueEl.style.cssText = 'font-size:1.05rem; font-weight:700; color:' + (isSkip ? '#94a3b8' : '#2563eb') + ';';
+        valueEl.textContent = isSkip ? f.value : f.value;
+
+        card.appendChild(topRow);
+        card.appendChild(descEl);
+        card.appendChild(pathEl);
+        card.appendChild(valueEl);
+        container.appendChild(card);
+      });
+    }
+
+    renderGroup(starred,   '⭐ Recommended — start here', 'color:#166534;');
+    renderGroup(regular,   'All Fields');
+    renderGroup(skippable, 'Raw Counts — not useful for trending', 'color:#94a3b8;');
   }
 
   function humanize(key) {
