@@ -26,9 +26,14 @@
         %strong Click any numeric field to use it as your query
       .qb-step-body
         %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 0.75rem;"}
-          Numeric fields are highlighted.
-          %strong Click one
-          to select it.
+          Scroll down to find
+          %strong{style: "color: #4ade80;"} score fields
+          — they glow green. IDs and ordinals are also green but not useful to chart.
+          Look for fields like
+          %code{style: "background: #1e293b; color: #4ade80; padding: 1px 5px; border-radius: 3px;"} scores.overallScore
+          or
+          %code{style: "background: #1e293b; color: #4ade80; padding: 1px 5px; border-radius: 3px;"} visibility.overall.visibilityScore
+          %strong — click one to select it.
         #qb-json-explorer{style: "background: #0f172a; border-radius: 8px; padding: 1.25rem 1.5rem; overflow: auto; max-height: 480px; font-family: monospace; font-size: 0.82rem; line-height: 1.8;"}
           Loading…
 
