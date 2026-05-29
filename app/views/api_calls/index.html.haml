@@ -11,6 +11,12 @@
       %p{style: "margin: 0.25rem 0 0; font-size: 0.875rem; color: #64748b;"} Full API spec — all endpoints, parameters, and response schemas
     = link_to "View API Docs →", "https://app.gumshoe.ai/openapi", target: "_blank", rel: "noopener", class: "btn btn-primary btn-sm"
 
+.explore-recent{style: "margin-bottom: 1.5rem;"}
+  %p.explore-recent-label Recent Runs:
+  %ul.explore-recent-list
+    %li= link_to "% Results Ranked #1", api_query_rank_trends_path, class: "recent-query-link"
+    %li= link_to "Not Mentioned", api_query_not_mentioned_path, class: "recent-query-link"
+
 .feature-grid
 
   .feature-card
