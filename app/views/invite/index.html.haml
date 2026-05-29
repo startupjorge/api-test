@@ -39,6 +39,6 @@
               %td.text-muted= ca.note.presence || "—"
               %td.text-muted= ca.created_at.strftime("%b %d, %Y")
               %td{style: "text-align: right;"}
-                = button_to "Remove", invite_path(ca, email: ca.email), method: :delete, class: "btn btn-secondary btn-sm", data: { turbo_confirm: "Remove #{ca.email}?" }
+                = button_to "Remove", invite_path(ca), method: :delete, class: "btn btn-secondary btn-sm", data: { turbo_confirm: "Remove #{ca.email}?" }
     - else
       %p.text-muted{style: "margin-top: 1rem; font-size: 0.875rem;"} No customers invited yet.

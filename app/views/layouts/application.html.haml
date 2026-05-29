@@ -26,7 +26,7 @@
               = link_to "API Calls & Instructions", api_calls_path, class: "nav-link"
               = link_to "API Key", settings_path, class: "nav-link"
               - if employee?
-                = link_to "Invite", invite_path, class: "nav-link"
+                = link_to "Invite", invite_index_path, class: "nav-link"
           - if logged_in?
             .nav-divider
             %span.nav-employee= (current_employee || current_customer).split('@').first.capitalize

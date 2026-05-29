@@ -17,7 +17,11 @@ class InviteController < ApplicationController
   end
 
   def destroy
-    CustomerAccess.find_by(email: params[:email])&.destroy
-    redirect_to invite_index_path, notice: "#{params[:email]} removed."
+    ca = CustomerAccess.find(params[:id])
+    email = ca.email
+    ca.destroy
+    redirect_to invite_index_path, notice: "#{email} removed."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to invite_index_path, alert: "Customer not found."
   end
 end
