@@ -148,3 +148,4 @@ class ExploreController < ApplicationController
     @api_endpoints = ["GET /reports/#{@report_id}/runs/#{@ordinal}/raw"]
   end
 end
+
