@@ -74,6 +74,6 @@ class CustomQueriesController < ApplicationController
   private
 
   def custom_query_params
-    params.require(:custom_query).permit(:name, :description, :icon, :query_key, :value_path, :y_axis_label, :active)
+    params.require(:custom_query).permit(:name, :description, :icon, :query_key, :value_path, :y_axis_label, :active, :report_id, :report_title)
   end
 end

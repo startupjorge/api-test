@@ -56,6 +56,8 @@
 
         = form_with url: custom_queries_path, method: :post, local: true do |f|
           %input{type: "hidden", name: "custom_query[value_path]", id: "qb-value-path-input", value: ""}
+          %input{type: "hidden", name: "custom_query[report_id]", id: "qb-report-id-input", value: ""}
+          %input{type: "hidden", name: "custom_query[report_title]", id: "qb-report-title-input", value: ""}
 
           .two-col{style: "display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;"}
             .form-group
@@ -142,6 +144,10 @@
   function qbFetchSample() {
     var reportId = document.getElementById('qb-report-select').value;
     if (!reportId) { alert('Please select a report first.'); return; }
+    var sel = document.getElementById('qb-report-select');
+    var reportTitle = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+    document.getElementById('qb-report-id-input').value = reportId;
+    document.getElementById('qb-report-title-input').value = reportTitle;
     var status = document.getElementById('qb-fetch-status');
     var btn    = document.getElementById('qb-fetch-btn');
     status.style.display = 'block';
