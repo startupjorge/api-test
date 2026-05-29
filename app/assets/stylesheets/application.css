@@ -1832,3 +1832,18 @@ body.page-mode-customer {}
   border-radius: 99px;
   border: 1px solid rgba(255,255,255,0.15);
 }
+
+/* Nav consistency fix */
+.nav-right { align-items: center; }
+.nav-internal { align-items: center; }
+
+.nav-employee {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: rgba(255,255,255,0.9) !important;
+  padding: 0.35rem 0.75rem !important;
+  background: rgba(255,255,255,0.1) !important;
+  border-radius: 99px !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  line-height: 1 !important;
+}
