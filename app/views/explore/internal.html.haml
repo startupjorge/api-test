@@ -34,8 +34,8 @@
     .test-step
       .test-step-label Step 2 — Choose a query
       .query-cards
-        .query-card{id: "card-trends"}
-          = f.radio_button :query_type, "trends", id: "qt_trends"
+        .query-card{id: "card-trends", onclick: "document.getElementById('qt_trends').click()"}
+          = f.radio_button :query_type, "trends", id: "qt_trends", checked: @query_type != "not_mentioned"
           %label.query-card-label{for: "qt_trends"}
             .query-card-icon 📈
             .query-card-content
@@ -44,7 +44,7 @@
               %p.query-card-endpoint
                 %code GET /reports/:id/runs/:ordinal/raw
 
-        .query-card{id: "card-not_mentioned"}
+        .query-card{id: "card-not_mentioned", onclick: "document.getElementById('qt_not_mentioned').click()"}
           = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned"
           %label.query-card-label{for: "qt_not_mentioned"}
             .query-card-icon 🔍
