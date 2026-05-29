@@ -1,49 +1,62 @@
-- content_for :title, "API Calls & Instructions · Gumshoe"
+- content_for :title, "API Queries & How-To · Gumshoe"
 
 .page-header
-  %h1 API Calls & Instructions
-  %p.text-muted How to use the Gumshoe API to analyze your brand data
+  %h1 API Queries & How-To
+  %p.text-muted The queries available in the Gumshoe API — what they do, how to run them, and how to use them directly
 
 .feature-grid
 
   .feature-card
-    .feature-card-icon 💬
-    %h3 Explore Gumshoe API
-    %p Ask a question in plain English and the app figures out which API call to make. Best for quick lookups without knowing the exact report ID.
-    %p.text-muted{style: "font-size: 0.825rem;"} Try: "Show rank trends for report 22110" or "List my reports"
-    .feature-card-actions
-      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
-
-  .feature-card
     .feature-card-icon 📈
     %h3 % Results Ranked #1
-    %p Shows how often each brand appears as the #1 AI answer across every run of a report. Use this to track momentum and compare brands over time.
-    %p.text-muted{style: "font-size: 0.825rem;"} Go to My Reports → click a report → View Chart
+    %p.text-muted What it does
+    %p Measures how often each brand appears as the #1 AI answer across every run of a report. Tracks brand visibility momentum over time.
+    %p.text-muted{style: "font-size: 0.825rem; margin-top: 0.75rem;"} API endpoint used
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.3rem 0.6rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} GET /reports/:id/runs/:ordinal/raw
+    %p.text-muted{style: "font-size: 0.825rem;"} How to run it
+    %p{style: "font-size: 0.875rem;"} Go to My Reports → click a report → View Chart. Or call the raw endpoint and count mentions where rank == 1, divided by total answers.
     .feature-card-actions
-      = link_to "My Reports →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "Run it →", reports_path, class: "btn btn-primary btn-sm"
 
   .feature-card
     .feature-card-icon 🔍
     %h3 Not Mentioned
-    %p Shows every AI conversation where a specific brand was completely absent. Use this to find gaps in brand visibility and understand where competitors dominate.
-    %p.text-muted{style: "font-size: 0.825rem;"} Go to My Reports → click a report → View Results
+    %p.text-muted What it does
+    %p Finds every AI conversation where a specific brand was completely absent from the answer. Surfaces competitive gaps and blind spots.
+    %p.text-muted{style: "font-size: 0.825rem; margin-top: 0.75rem;"} API endpoint used
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.3rem 0.6rem; border-radius: 4px; display: block; margin-bottom: 0.75rem;"} GET /reports/:id/runs/:ordinal/raw
+    %p.text-muted{style: "font-size: 0.825rem;"} How to run it
+    %p{style: "font-size: 0.875rem;"} Go to My Reports → click a report → View Results. Or call the raw endpoint and filter answers where the brand key does not appear in any mention.
     .feature-card-actions
-      = link_to "My Reports →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "Run it →", reports_path, class: "btn btn-primary btn-sm"
+
+  .feature-card
+    .feature-card-icon 💬
+    %h3 Natural Language Query
+    %p.text-muted What it does
+    %p Ask a question in plain English — the app detects the intent and runs the matching API call automatically. No report ID required upfront.
+    %p.text-muted{style: "font-size: 0.825rem; margin-top: 0.75rem;"} Example queries
+    %ul{style: "font-size: 0.875rem; padding-left: 1.25rem; margin-bottom: 0.75rem;"}
+      %li "Show rank trends for report 22110"
+      %li "Not mentioned for brand shipiumcom in report 22110 run 1"
+      %li "List my reports"
+    %p.text-muted{style: "font-size: 0.825rem;"} How to run it
+    %p{style: "font-size: 0.875rem;"} Go to Explore Gumshoe API and type your question.
+    .feature-card-actions
+      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
 
 .panel{style: "margin-top: 2rem;"}
   .card-header
-    %h3 Quick Start
+    %h3 Running queries directly via the API
   .card-body
-    %ol{style: "margin: 0; padding-left: 1.25rem; line-height: 2;"}
-      %li
-        Add your Gumshoe API key under
-        = link_to "API Key", settings_path
-      %li
-        Go to
-        = link_to "My Reports", reports_path
-        to see all reports connected to your account
-      %li Click any report to see the available API calls and results for that report
-      %li
-        Use
-        = link_to "Explore Gumshoe API", explore_internal_path
-        to ask questions in plain English across any report
+    %p{style: "margin-bottom: 1rem; color: #374151;"} Every query in this app is powered by the Gumshoe REST API. You can run them directly using curl or any HTTP client.
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Authentication
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; margin-bottom: 1rem;"} Authorization: Bearer YOUR_API_KEY
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Example — fetch raw run data
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap; margin-bottom: 1rem;"}
+      curl -H "Authorization: Bearer YOUR_API_KEY" \
+      #{" "}https://api.gumshoe.ai/reports/22110/runs/1/raw
+    %p.text-muted{style: "font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem;"} Example — list reports
+    %code{style: "font-size: 0.8rem; background: #f1f5f9; padding: 0.4rem 0.75rem; border-radius: 4px; display: block; white-space: pre-wrap;"}
+      curl -H "Authorization: Bearer YOUR_API_KEY" \
+      #{" "}https://api.gumshoe.ai/reports
