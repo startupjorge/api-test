@@ -16,69 +16,81 @@
     %span.breadcrumb-sep /
     %span= title
 
-  .page-header{style: "display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;"}
-    %div
-      %h1= title
-      %p.text-muted
-        - if brand_name
-          Brand: #{brand_name}
-          ·
-        - if status
-          %span.status{class: status&.downcase}= status&.capitalize
-        - if @runs&.any?
-          · #{@runs.count} #{"run".pluralize(@runs.count)}
-        · ID:
-        %code{style: "font-size: 0.8rem;"}= report_id
+  .page-header
+    %h1= title
+    %p.text-muted
+      - if brand_name
+        Brand: #{brand_name} ·
+      - if status
+        %span.status{class: status&.downcase}= status&.capitalize
+      · ID:
+      %code{style: "font-size: 0.8rem;"}= report_id
 
-  / ── Latest Run Stats ──────────────────────────────────────
-  - if @latest_stats && @latest_stats[:total] > 0
-    .stats-section
-      %h3.stats-section-title
-        Latest Run Stats
-        %span.stats-run-label Run #{latest_ordinal}
-      .stats-brands
+  / ── % Results Ranked #1 ─────────────────────────────────────
+  .panel{style: "margin-bottom: 1.5rem;"}
+    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
+      %div
+        %h3 📈 % Results Ranked #1
+        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} How often each brand appears as the #1 AI answer
+      .card-header-actions
+        = link_to "View Chart →", trends_report_path(report_id), class: "btn btn-primary btn-sm"
+        = link_to "📤 Share", customer_trends_report_path(report_id), class: "btn btn-share btn-sm"
+    .card-body
+      - if @latest_stats && @latest_stats[:total] > 0
+        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{@latest_stats[:total]} total answers
         - sorted = @latest_stats[:brand_names].sort_by { |bkey, _| -(@latest_stats[:brand_counts][bkey] || 0) }
-        - sorted.each do |bkey, bname|
-          - ranked1 = @latest_stats[:brand_counts][bkey] || 0
-          - not_mentioned = @latest_stats[:not_mentioned_counts][bkey] || 0
-          - total = @latest_stats[:total]
-          - pct = total > 0 ? (ranked1.to_f / total * 100).round(1) : 0
-          .brand-stat-row
-            .brand-stat-name= bname
-            .brand-stat-pills
-              .stat-pill.stat-pill-green
-                %span.pill-label % Ranked #1
-                %span.pill-value= "#{pct}%"
-              .stat-pill.stat-pill-red
-                %span.pill-label Not Mentioned
-                %span.pill-value= not_mentioned
-              - if brand_key == bkey
-                = link_to "View →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: bkey), class: "btn btn-outline btn-xs"
+        %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+          %thead
+            %tr
+              %th{style: "text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Brand
+              %th{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} % Ranked #1
+          %tbody
+            - sorted.each do |bkey, bname|
+              - ranked1 = @latest_stats[:brand_counts][bkey] || 0
+              - total = @latest_stats[:total]
+              - pct = total > 0 ? (ranked1.to_f / total * 100).round(1) : 0
+              %tr
+                %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= bname
+                %td{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #16a34a;"}= "#{pct}%"
+      - else
+        %p.text-muted No data available yet.
 
-  / ── API Calls ──────────────────────────────────────────────
-  .feature-grid
-    .feature-card
-      .feature-card-icon 📈
-      %h3 % Results Ranked #1
-      %p How often each brand appears as the #1 AI answer across every run — track momentum over time.
-      .feature-card-actions
-        = link_to "View Chart", trends_report_path(report_id), class: "btn btn-primary btn-sm"
-        = link_to "📤 Share Externally", customer_trends_report_path(report_id), class: "btn btn-share btn-sm"
-    .feature-card
-      .feature-card-icon 🔍
-      %h3 Not Mentioned
-      %p Every AI conversation where a specific brand was completely absent — your competitive gap finder.
-      .feature-card-actions
+  / ── Not Mentioned ───────────────────────────────────────────
+  .panel{style: "margin-bottom: 1.5rem;"}
+    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
+      %div
+        %h3 🔍 Not Mentioned
+        %p.text-muted{style: "font-size: 0.8rem; margin: 0;"} AI conversations where a brand was completely absent
+      .card-header-actions
         - if brand_key.present?
-          = link_to "View Results", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
-          = link_to "📤 Share Externally", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
+          = link_to "View Results →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-primary btn-sm"
+          = link_to "📤 Share", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
         - else
-          = link_to "View Results", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
-          = link_to "📤 Share Externally", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-share btn-sm"
+          = link_to "View Results →", not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-primary btn-sm"
+          = link_to "📤 Share", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: latest_ordinal), class: "btn btn-share btn-sm"
+    .card-body
+      - if @latest_stats && @latest_stats[:total] > 0
+        %p.text-muted{style: "font-size: 0.8rem; margin-bottom: 1rem;"} Latest run (Run #{latest_ordinal}) · #{@latest_stats[:total]} total answers
+        - sorted = @latest_stats[:brand_names].sort_by { |bkey, _| -(@latest_stats[:not_mentioned_counts][bkey] || 0) }
+        %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+          %thead
+            %tr
+              %th{style: "text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Brand
+              %th{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Not Mentioned
+          %tbody
+            - sorted.each do |bkey, bname|
+              - not_mentioned = @latest_stats[:not_mentioned_counts][bkey] || 0
+              - total = @latest_stats[:total]
+              - pct = total > 0 ? (not_mentioned.to_f / total * 100).round(1) : 0
+              %tr
+                %td{style: "padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}= bname
+                %td{style: "text-align: right; padding: 0.4rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #dc2626;"}= "#{not_mentioned} (#{pct}%)"
+      - else
+        %p.text-muted No data available yet.
 
-  / ── Runs ────────────────────────────────────────────────
+  / ── All Runs ────────────────────────────────────────────────
   - if @runs && @runs.any?
-    .panel{style: "margin-top: 1.5rem;"}
+    .panel
       .card-header
         %h3 All Runs
         %span.text-muted{style: "font-size: 0.8rem;"} #{@runs.count} total
@@ -87,7 +99,7 @@
           %tr
             %th Run
             %th Date
-            %th{style: "text-align: right;"} Share Externally
+            %th{style: "text-align: right;"} Share
         %tbody
           - @runs.each do |run|
             - ordinal = run['ordinal'] || run[:ordinal]
@@ -105,11 +117,3 @@
                   = link_to "📤 Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal, brand_key: brand_key), class: "btn btn-share btn-sm"
                 - else
                   = link_to "📤 Not Mentioned", customer_not_mentioned_report_run_path(report_id: report_id, ordinal: ordinal), class: "btn btn-share btn-sm"
-
-:javascript
-  function togglePanel(header) {
-    const body = header.nextElementSibling;
-    const toggle = header.querySelector('.panel-toggle');
-    body.classList.toggle('hidden');
-    toggle.classList.toggle('open');
-  }
