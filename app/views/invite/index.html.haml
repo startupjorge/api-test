@@ -2,10 +2,11 @@
 
 .page-header
   %h1 Share Access
-  %p.text-muted Generate a unique access link for a customer
+  %p.text-muted Invite a customer — they'll get a direct access link and can also log in by email
 
 .two-col-layout{style: "display: grid; grid-template-columns: 400px 1fr; gap: 2rem; align-items: start;"}
 
+  / ── Form ───────────────────────────────────────────────────
   .panel
     .card-header
       %h3 Generate Access Link
@@ -28,12 +29,16 @@
             Leave blank — customer will be prompted to enter their own
         = f.submit "Generate Link →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
 
+  / ── Link output ─────────────────────────────────────────────
   .panel
     - if @access_link
       .card-header
         %h3 Access Link for #{@invited_email}
       .card-body
-        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 0.75rem;"} Share this link with the customer. It expires in 90 days.
+        %p.text-muted{style: "font-size: 0.85rem; margin-bottom: 0.75rem;"}
+          Share this link with the customer. It expires in 90 days. They can also log in directly at
+          = link_to "the login page", login_path
+          using their email.
         .form-group
           %input.form-input{type: "text", value: @access_link, readonly: true, style: "font-family: monospace; font-size: 0.78rem;", onclick: "this.select()"}
         %button.btn.btn-secondary{style: "margin-top: 0.5rem; width: 100%;", onclick: "navigator.clipboard.writeText('#{@access_link}').then(() => { this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = 'Copy Link', 2000); }); return false;"}
@@ -43,3 +48,21 @@
         %h3 Your link will appear here
       .card-body
         %p.text-muted Fill in the form and click Generate Link.
+
+/ ── Customer list ───────────────────────────────────────────
+- if @customers.any?
+  .panel{style: "margin-top: 2rem;"}
+    .card-header{style: "display: flex; align-items: center; justify-content: space-between;"}
+      %h3 Invited Customers
+      %span.text-muted{style: "font-size: 0.8rem;"}= "#{@customers.count} #{"customer".pluralize(@customers.count)}"
+    %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+      %thead
+        %tr
+          %th{style: "text-align: left; padding: 0.5rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} Email
+          %th{style: "text-align: left; padding: 0.5rem 1.25rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;"} API Key
+      %tbody
+        - @customers.each do |customer|
+          %tr
+            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #1e293b;"}= customer.email
+            %td{style: "padding: 0.65rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-family: monospace; font-size: 0.8rem;"}
+              = customer.api_key.present? ? "#{customer.api_key[0..12]}…" : "—"
