@@ -4,6 +4,10 @@ class InviteController < ApplicationController
   def index
     @customers = Customer.order(:email)
     @new_customer = Customer.new
+  rescue => e
+    @customers = []
+    @new_customer = Customer.new
+    flash.now[:alert] = "Database not ready yet — #{e.message}"
   end
 
   def create

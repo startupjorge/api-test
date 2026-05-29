@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
-bundle exec rails db:migrate 2>/dev/null || true
+mkdir -p /rails/storage
+bundle exec rails db:migrate
 
 exec "${@}"
