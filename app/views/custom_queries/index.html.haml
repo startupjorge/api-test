@@ -29,12 +29,12 @@
                 %span.status.complete Active
               - else
                 %span.status.pending Inactive
-            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; text-align: right;"}
-              .btn-group
-                %button.btn.btn-primary.btn-sm{onclick: "toggleReportPicker('#{q.query_key}', this)", style: "display: inline-flex; align-items: center; gap: 0.3rem;"}
+            %td{style: "padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; text-align: right; vertical-align: middle;"}
+              %div{style: "display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;"}
+                %button.btn.btn-primary.btn-sm{onclick: "toggleReportPicker('#{q.query_key}', this)", style: "display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;"}
                   ▶ Run on Report
                 = link_to "Edit", edit_custom_query_path(q), class: "btn btn-secondary btn-sm"
-                = button_to "Delete", custom_query_path(q), method: :delete, class: "btn btn-secondary btn-sm", style: "color: #dc2626;", data: { turbo_confirm: "Remove \"#{q.name}\"?" }
+                = button_to "Delete", custom_query_path(q), method: :delete, class: "btn btn-secondary btn-sm", style: "color: #dc2626; border-color: #fca5a5;", data: { turbo_confirm: "Remove \"#{q.name}\"?" }
           %tr{id: "picker-#{q.query_key}", style: "display: none;"}
             %td{colspan: 4, style: "padding: 0; border-bottom: 1px solid #e2e8f0;"}
               .report-picker{id: "picker-inner-#{q.query_key}", style: "background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 1rem 1.25rem;"}
