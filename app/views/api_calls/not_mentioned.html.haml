@@ -42,8 +42,3 @@
       # For each answer in personas[].questions[].answers[]
       # Check: mentions[].brand.key does NOT include "your-brand-key"
       # Those answers = not mentioned
-
-.panel{style: "margin-top: 1.5rem;"}
-  .card-body{style: "display: flex; align-items: center; gap: 1rem;"}
-    %span{style: "color: #374151;"} Try it now in Explore →
-    = link_to "Not mentioned for brand shipiumcom in report 22110 run 1", explore_internal_path(query: "Not mentioned for brand shipiumcom in report 22110 run 1"), class: "btn btn-primary btn-sm"
