@@ -40,12 +40,16 @@
       - recent.first(8).each do |h|
         - friendly = case h["action"]
           - when "trends"        then "% Results Ranked #1"
-          - when "not_mentioned" then "% of Conversations Not Mentioned"
+          - when "not_mentioned" then "Not Mentioned"
           - when "list_reports"  then "List Reports"
           - when "show_report"   then "Report #{h["report_id"]}"
           - else h["query"]
+        - detail_path = case h["action"]
+          - when "trends"        then api_query_rank_trends_path
+          - when "not_mentioned" then api_query_not_mentioned_path
+          - else root_path(query: h["query"])
         %li
-          = link_to friendly, root_path(query: h["query"]), class: "recent-query-link"
+          = link_to friendly, detail_path, class: "recent-query-link"
 
 - if @query.present?
   .explore-results
