@@ -1911,3 +1911,13 @@ body.page-mode-customer {}
 .qb-step-body { padding: 1.25rem; }
 .qb-report-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
 .qb-selected-field { font-size: 0.85rem; }
+
+/* Field picker cards */
+#qb-field-list > div {
+  overflow: hidden;
+  word-break: break-word;
+}
+#qb-field-list > div div {
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
