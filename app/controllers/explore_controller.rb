@@ -16,6 +16,7 @@ class ExploreController < ApplicationController
       when "not_mentioned" then build_not_mentioned(client)
       end
 
+      @api_calls = client.api_calls
       save_query_to_history(@query_type, @report_id, @brand_key) unless @result_error
     end
   rescue => e

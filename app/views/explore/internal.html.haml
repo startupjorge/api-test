@@ -14,8 +14,8 @@
 
 .test-center
   .test-center-header
-    %h1 Test the Gumshoe API
-    %p.text-muted Pick a report, choose what you want to know, and see the live API response.
+    %h1 Gumshoe API Test Center
+    %p.text-muted Pick a report and a query — see the live request, raw JSON response, and processed result.
 
   = form_with url: root_path, method: :get, local: true do |f|
 
@@ -27,12 +27,12 @@
             { include_blank: "— choose a report —", selected: @report_id },
             class: "form-select"
       - elsif current_api_key.blank?
-        %p.text-muted Add an API key above to load your reports.
+        %p.text-muted{style: "font-size: 0.875rem;"} Add an API key above to load your reports.
       - else
-        %p.text-muted No reports found for this API key.
+        %p.text-muted{style: "font-size: 0.875rem;"} No reports found for this API key.
 
     .test-step
-      .test-step-label Step 2 — What do you want to know?
+      .test-step-label Step 2 — Choose a query
       .query-cards
         .query-card{id: "card-trends"}
           = f.radio_button :query_type, "trends", id: "qt_trends"
@@ -41,6 +41,8 @@
             .query-card-content
               %strong % Results Ranked #1
               %p How often each brand appears as the #1 AI answer across all runs — tracks visibility momentum over time
+              %p.query-card-endpoint
+                %code GET /reports/:id/runs/:ordinal/raw
 
         .query-card{id: "card-not_mentioned"}
           = f.radio_button :query_type, "not_mentioned", id: "qt_not_mentioned"
@@ -49,19 +51,67 @@
             .query-card-content
               %strong Not Mentioned
               %p Conversations where a brand was completely absent from AI answers — surfaces competitive blind spots
+              %p.query-card-endpoint
+                %code GET /reports/:id/runs/:ordinal/raw
 
     #brand-key-group{style: "display: none;"}
       .test-step
         .test-step-label Brand key
-        %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 0.5rem;"} The brand key to check — e.g. <code>shipiumcom</code>
+        %p.text-muted{style: "font-size: 0.82rem; margin-bottom: 0.5rem;"}
+          The brand identifier to filter on — e.g.
+          %code shipiumcom
         = f.text_field :brand_key, value: @brand_key, placeholder: "e.g. shipiumcom", class: "form-control", style: "max-width: 320px;"
 
     .test-step
-      = f.submit "Run →", class: "btn btn-primary btn-lg", disabled: @reports.empty?
+      = f.submit "Run →", class: "btn btn-primary btn-lg"
+
+- if @result_error
+  .alert.alert-danger{style: "margin-top: 1.5rem;"}= @result_error
+
+- if @api_calls&.any?
+  .api-test-panel
+    .api-test-panel-header
+      %span.api-test-panel-title API Calls
+      %span.api-test-panel-count= "#{@api_calls.size} request#{@api_calls.size == 1 ? '' : 's'}"
+
+    - @api_calls.each_with_index do |call, i|
+      .api-call-block
+        .api-call-request
+          .api-call-request-line
+            %span.http-method= call[:method]
+            %span.api-call-url= call[:url]
+          .api-call-meta-row
+            - status_class = call[:status] < 300 ? "status-ok" : "status-err"
+            %span.status-badge{class: status_class}= "#{call[:status]} #{call[:status] < 300 ? "OK" : "Error"}"
+            %span.api-call-time= "#{call[:time_ms]}ms"
+            %button.btn-copy-curl{type: "button", "data-curl": call[:curl], onclick: "copyCurl(this)"} Copy curl
+
+        .api-call-response
+          .api-call-response-header
+            %span Response body
+            %button.btn-toggle-json{type: "button", onclick: "toggleJson(this)"} Show full JSON ▼
+          %pre.json-preview{id: "json-#{i}"}= call[:body].to_s.lines.first(20).join
+          %pre.json-full{id: "json-full-#{i}", style: "display:none;"}= call[:body]
+
+- if @result_type
+  .result-panel
+    .result-panel-header
+      %span.result-panel-title
+        - if @result_type == :trends
+          📈 % Results Ranked #1
+        - elsif @result_type == :not_mentioned
+          🔍 Not Mentioned
+      %span.result-panel-sub Computed from API response
+
+    .result-panel-body
+      - if @result_type == :trends
+        = render "trends_result"
+      - elsif @result_type == :not_mentioned
+        = render "not_mentioned_result"
 
 - recent = (session[:query_history] || [])
 - if recent.any?
-  .explore-recent{style: "margin-top: 1.5rem;"}
+  .explore-recent{style: "margin-top: 2rem;"}
     %p.explore-recent-label Recent Runs:
     %ul.explore-recent-list
       - recent.first(5).each do |h|
@@ -72,28 +122,14 @@
           - if h["report_id"]
             %span.recent-query-meta= "report #{h["report_id"]}#{" · #{h["brand_key"]}" if h["brand_key"].present?}"
 
-- if @result_error
-  .alert.alert-danger{style: "margin-top: 1.5rem;"}= @result_error
-- elsif @result_type
-  .api-call-banner
-    %span.api-call-label API endpoint#{@api_endpoints.size > 1 ? "s" : ""} called:
-    - @api_endpoints.each do |ep|
-      %code.api-call-endpoint= ep
-
-  - if @result_type == :trends
-    = render "trends_result"
-  - elsif @result_type == :not_mentioned
-    = render "not_mentioned_result"
-
 :javascript
   (function() {
     const radios = document.querySelectorAll('input[name="query_type"]');
     const brandGroup = document.getElementById('brand-key-group');
-    const cards = document.querySelectorAll('.query-card');
 
     function updateUI() {
       const selected = document.querySelector('input[name="query_type"]:checked');
-      cards.forEach(c => c.classList.remove('query-card-selected'));
+      document.querySelectorAll('.query-card').forEach(c => c.classList.remove('query-card-selected'));
       if (selected) {
         document.getElementById('card-' + selected.value)?.classList.add('query-card-selected');
         brandGroup.style.display = selected.value === 'not_mentioned' ? '' : 'none';
@@ -101,18 +137,23 @@
     }
 
     radios.forEach(r => r.addEventListener('change', updateUI));
-
-    // restore state on page load (after form submit)
-    const preselected = document.querySelector('input[name="query_type"]:checked');
-    if (preselected) updateUI();
-    else {
-      // pre-select the first radio on fresh load when a report is chosen
-      const reportSelect = document.querySelector('select[name="report_id"]');
-      if (reportSelect) reportSelect.addEventListener('change', () => {
-        if (!document.querySelector('input[name="query_type"]:checked')) {
-          document.getElementById('qt_trends').checked = true;
-          updateUI();
-        }
-      });
-    }
+    updateUI();
   })();
+
+  function copyCurl(btn) {
+    const curl = btn.getAttribute('data-curl');
+    navigator.clipboard.writeText(curl).then(() => {
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = 'Copy curl', 2000);
+    });
+  }
+
+  function toggleJson(btn) {
+    const block = btn.closest('.api-call-response');
+    const preview = block.querySelector('[id^="json-"]:not([id*="full"])');
+    const full = block.querySelector('[id*="full"]');
+    const collapsed = full.style.display === 'none';
+    preview.style.display = collapsed ? 'none' : '';
+    full.style.display = collapsed ? '' : 'none';
+    btn.textContent = collapsed ? 'Show less ▲' : 'Show full JSON ▼';
+  }
