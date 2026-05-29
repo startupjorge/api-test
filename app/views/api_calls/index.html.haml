@@ -45,6 +45,33 @@
     .feature-card-actions
       = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
 
+- if @query_history.any?
+  .panel{style: "margin-top: 2rem; margin-bottom: 2rem;"}
+    .card-header
+      %h3 Queries run this session
+    .card-body
+      %table{style: "width: 100%; border-collapse: collapse; font-size: 0.875rem;"}
+        %thead
+          %tr
+            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Query
+            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Type
+            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Report
+            %th{style: "text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #6b7280; font-weight: 600;"} Ran at
+            %th{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0;"}
+        %tbody
+          - @query_history.each do |h|
+            %tr
+              %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"}= h["query"]
+              %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #374151;"}= h["action"].to_s.gsub("_", " ").capitalize
+              %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #374151;"}
+                - if h["report_id"]
+                  %code{style: "background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 3px;"}= h["report_id"]
+              %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #6b7280; white-space: nowrap;"}
+                - if h["ran_at"]
+                  = Time.parse(h["ran_at"]).strftime("%-m/%-d %H:%M") rescue h["ran_at"]
+              %td{style: "padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9;"}
+                = link_to "Re-run →", explore_internal_path(query: h["query"]), class: "btn btn-primary btn-sm"
+
 .panel{style: "margin-top: 2rem;"}
   .card-header
     %h3 Running queries directly via the API

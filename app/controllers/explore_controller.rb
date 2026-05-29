@@ -23,9 +23,24 @@ class ExploreController < ApplicationController
     when :list_reports  then build_reports_list(client)
     when :show_report   then build_report(client)
     end
+
+    save_query_to_history(@query, @intent)
   rescue => e
     @result_error = e.message
     Rails.logger.error "ExploreController error: #{e.class} - #{e.message}"
+  end
+
+  def save_query_to_history(query, intent)
+    history = session[:query_history] || []
+    history.unshift(
+      "query"       => query,
+      "action"      => intent[:action].to_s,
+      "report_id"   => intent[:report_id],
+      "brand_key"   => intent[:brand_key],
+      "ordinal"     => intent[:ordinal],
+      "ran_at"      => Time.current.iso8601
+    )
+    session[:query_history] = history.first(50)
   end
 
   def detect_intent(query)

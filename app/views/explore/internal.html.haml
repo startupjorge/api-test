@@ -30,6 +30,16 @@
     %button.chip{type: "button", onclick: "setExploreQuery('Not mentioned for brand shipiumcom in report 22110 run 1')"} 🔍 Not mentioned
     %button.chip{type: "button", onclick: "setExploreQuery('List my reports')"} 📋 List reports
 
+- recent = (session[:query_history] || []).reject { |h| h["query"] == @query }
+- if recent.any?
+  .explore-recent
+    %p.explore-recent-label Recent queries
+    %ul.explore-recent-list
+      - recent.first(8).each do |h|
+        %li
+          = link_to h["query"], explore_internal_path(query: h["query"]), class: "recent-query-link"
+          %span.recent-query-meta= h["action"].gsub("_", " ").capitalize
+
 - if @query.present?
   .explore-results
     - if @intent && @intent[:action] != :unknown
