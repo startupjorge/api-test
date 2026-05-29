@@ -94,9 +94,9 @@
 
     var hint = document.getElementById('qb-mode-hint');
     if (mode === 'simple') {
-      hint.innerHTML = 'Fields pulled live from this report\'s latest run. <strong>Start with a ⭐ Recommended field — click it to select.</strong>';
+      hint.innerHTML = 'All available fields from this report — described in plain English. <strong>Start with a ⭐ Recommended field.</strong>';
     } else {
-      hint.innerHTML = 'All numeric fields from the API response. Expand the JSON below to see the full structure.';
+      hint.innerHTML = 'All available fields with API path and live value. Raw JSON response available below.';
     }
 
     // Re-render with current fields if already loaded
@@ -242,15 +242,7 @@
       else regular.push({ f: f, cat: cat });
     });
 
-    if (qbMode === 'simple') {
-      // Only show starred; if none, fall back to all
-      if (starred.length === 0) {
-        // nothing starred for this report — show everything
-      } else {
-        renderGroup(starred, '⭐ Recommended — start here', 'color:#166534;');
-        return;
-      }
-    }
+    // Both modes show all fields — Simple uses friendly labels, Developer shows paths prominently
 
     function renderGroup(items, groupLabel, groupStyle) {
       if (items.length === 0) return;
@@ -289,15 +281,25 @@
 
         var descEl = document.createElement('div');
         descEl.style.cssText = 'font-size:0.78rem; color:#64748b; margin-bottom:0.5rem; line-height:1.5;';
-        descEl.textContent = (cat && cat.desc) ? cat.desc : '';
+        if (qbMode === 'simple') {
+          // Plain English — hide path, show friendly description prominently
+          descEl.textContent = (cat && cat.desc) ? cat.desc : 'Numeric field from the API response.';
+        } else {
+          // Developer — show path prominently, desc as secondary
+          descEl.textContent = (cat && cat.desc) ? cat.desc : '';
+        }
 
         var pathEl = document.createElement('div');
-        pathEl.style.cssText = 'font-family:monospace; font-size:0.72rem; color:#94a3b8; margin-bottom:0.4rem;';
+        if (qbMode === 'developer') {
+          pathEl.style.cssText = 'font-family:monospace; font-size:0.78rem; color:#2563eb; font-weight:600; margin-bottom:0.4rem;';
+        } else {
+          pathEl.style.cssText = 'font-family:monospace; font-size:0.72rem; color:#94a3b8; margin-bottom:0.4rem;';
+        }
         pathEl.textContent = f.path;
 
         var valueEl = document.createElement('div');
         valueEl.style.cssText = 'font-size:1.05rem; font-weight:700; color:' + (isSkip ? '#94a3b8' : '#2563eb') + ';';
-        valueEl.textContent = isSkip ? f.value : f.value;
+        valueEl.textContent = f.value;
 
         card.appendChild(topRow);
         card.appendChild(descEl);
