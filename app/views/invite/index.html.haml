@@ -1,4 +1,12 @@
 - content_for :title, "Share Access · Gumshoe"
+- content_for :head do
+  :css
+    #query_type_group.hidden { display: none; }
+  :javascript
+    function toggleQuerySelect(sel) {
+      var group = document.getElementById('query_type_group');
+      if (group) group.classList.toggle('hidden', sel.value === '');
+    }
 
 .page-header
   %h1 Share Access
@@ -37,6 +45,26 @@
               [["24 hours", "1_day"], ["7 days", "7_days"], ["30 days", "30_days"], ["90 days", "90_days"], ["1 year", "1_year"], ["Never", "never"]],
               { selected: "30_days" },
               { class: "form-input" }
+        .form-group{style: "margin-bottom: 0.5rem;"}
+          = f.label :report_id, "Deep-link to Report (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+          - if @deeplink_reports.present?
+            = f.select :report_id,
+                [["— No deep link, show all reports —", ""]] + @deeplink_reports.map { |r|
+                  brand = r["brand"] || r[:brand] || {}
+                  label = brand["name"] || brand[:name] || r["id"] || r[:id]
+                  id    = r["id"]    || r[:id]
+                  [label, id]
+                },
+                { selected: params[:report_id] },
+                { class: "form-input", id: "deeplink_report_select", onchange: "toggleQuerySelect(this)" }
+          - else
+            %p.text-muted{style: "font-size: 0.78rem;"} Set your API key in Settings to enable deep-linking to a specific report.
+        .form-group{style: "margin-bottom: 0.5rem;", id: "query_type_group", class: params[:report_id].blank? ? "hidden" : ""}
+          = f.label :query_type, "Land on Query (optional)", style: "display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.875rem;"
+          = f.select :query_type,
+              [["— Show report overview —", ""]] + [["% Ranked #1 Trends", "trends"], ["Not Mentioned", "not_mentioned"]] + (@custom_queries || []).map { |q| [q.name, q.query_key] },
+              { selected: params[:query_type] },
+              { class: "form-input" }
         = f.submit "Generate Link →", class: "btn btn-primary", style: "width: 100%; margin-top: 0.75rem;"
 
   / ── Link output ─────────────────────────────────────────────
@@ -49,6 +77,12 @@
           Share this link with the customer. #{@expires_label}. They can also log in directly at
           = link_to "the login page", login_path
           using their email.
+        - if @deep_link_report_id.present?
+          %p{style: "font-size: 0.82rem; color: #059669; margin-bottom: 0.5rem;"}
+            ✓ Deep-links to report
+            %strong= @deep_link_report_id
+            - if @deep_link_query_type.present?
+              → #{@deep_link_query_type.humanize}
         .form-group
           %input.form-input{type: "text", value: @access_link, readonly: true, style: "font-family: monospace; font-size: 0.78rem;", onclick: "this.select()"}
         %button.btn.btn-secondary{style: "margin-top: 0.5rem; width: 100%;", onclick: "navigator.clipboard.writeText('#{@access_link}').then(() => { this.textContent = '✓ Copied!'; setTimeout(() => this.textContent = 'Copy Link', 2000); }); return false;"}

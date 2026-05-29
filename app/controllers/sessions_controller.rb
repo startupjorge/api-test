@@ -44,8 +44,9 @@ class SessionsController < ApplicationController
       session[:session_expires_at] = customer.invite_expires_at.iso8601
     end
 
+    destination = data[:redirect_to].presence || root_path
     if session[:customer_email].present? || session[:api_key].present?
-      redirect_to root_path, notice: "Welcome! You're now viewing the Gumshoe API."
+      redirect_to destination, notice: "Welcome! You're now viewing the Gumshoe API."
     else
       redirect_to login_path, notice: "Access link accepted — enter your email to continue."
     end
