@@ -1,27 +1,48 @@
-- content_for :title, "API Calls · Gumshoe"
+- content_for :title, "API Calls & Instructions · Gumshoe"
 
 .page-header
-  %h1 API Calls
-  %p.text-muted The Gumshoe API calls available to run on your reports
+  %h1 API Calls & Instructions
+  %p.text-muted How to use the Gumshoe API to analyze your brand data
 
 .feature-grid
+
+  .feature-card
+    .feature-card-icon 💬
+    %h3 Explore Gumshoe API
+    %p Ask a question in plain English and the app figures out which API call to make. Best for quick lookups without knowing the exact report ID.
+    %p.text-muted{style: "font-size: 0.825rem;"} Try: "Show rank trends for report 22110" or "List my reports"
+    .feature-card-actions
+      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
+
   .feature-card
     .feature-card-icon 📈
     %h3 % Results Ranked #1
-    %p How often each brand appears as the #1 AI answer across every run of a report — track momentum over time.
+    %p Shows how often each brand appears as the #1 AI answer across every run of a report. Use this to track momentum and compare brands over time.
+    %p.text-muted{style: "font-size: 0.825rem;"} Go to My Reports → click a report → View Chart
     .feature-card-actions
-      = link_to "Pick a Report →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "My Reports →", reports_path, class: "btn btn-primary btn-sm"
 
   .feature-card
     .feature-card-icon 🔍
     %h3 Not Mentioned
-    %p Every AI conversation where a specific brand was completely absent — your competitive gap finder.
+    %p Shows every AI conversation where a specific brand was completely absent. Use this to find gaps in brand visibility and understand where competitors dominate.
+    %p.text-muted{style: "font-size: 0.825rem;"} Go to My Reports → click a report → View Results
     .feature-card-actions
-      = link_to "Pick a Report →", reports_path, class: "btn btn-primary btn-sm"
+      = link_to "My Reports →", reports_path, class: "btn btn-primary btn-sm"
 
-  .feature-card
-    .feature-card-icon 💬
-    %h3 Natural Language Query
-    %p Ask the Gumshoe API anything in plain English — it figures out which call to make.
-    .feature-card-actions
-      = link_to "Open Explore →", explore_internal_path, class: "btn btn-primary btn-sm"
+.panel{style: "margin-top: 2rem;"}
+  .card-header
+    %h3 Quick Start
+  .card-body
+    %ol{style: "margin: 0; padding-left: 1.25rem; line-height: 2;"}
+      %li
+        Add your Gumshoe API key under
+        = link_to "API Key", settings_path
+      %li
+        Go to
+        = link_to "My Reports", reports_path
+        to see all reports connected to your account
+      %li Click any report to see the available API calls and results for that report
+      %li Use
+        = link_to "Explore Gumshoe API", explore_internal_path
+        to ask questions in plain English across any report
